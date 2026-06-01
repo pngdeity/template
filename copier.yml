@@ -1,0 +1,219 @@
+_min_copier_version: "9.0.0"
+_templates_suffix: .jinja
+_subdirectory: template
+_skip_if_exists:
+  - README.md
+  - CHANGELOG.md
+  - SECURITY.md
+  - CONTRIBUTING.md
+  - .env
+  - "**/.gitkeep"
+_exclude:
+  - "**/__pycache__"
+  - .git
+  - _partials
+  - "{% if _copier_operation == 'update' %}CHANGELOG.md{% endif %}"
+_tasks:
+  - ["git", "init"]
+  - command: "pre-commit install"
+    when: "{{ use_precommit and _copier_operation == 'copy' }}"
+  - command: "pre-commit install --hook-type commit-msg"
+    when: "{{ use_commitlint and use_precommit and _copier_operation == 'copy' }}"
+  - command: >-
+      command -v apm >/dev/null 2>&1 && apm install || echo "  → apm not found — run: apm install"
+    when: "{{ use_apm and _copier_operation == 'copy' }}"
+_migrations: []
+# To add a migration:
+#   - version: v1.1.0
+#     command: migrate-script.sh
+#     when: "{{ _stage == 'before' }}"
+# _external_data:
+#   parent_tpl: .copier-answers.yml
+_jinja_extensions:
+  - jinja2_time.TimeExtension
+_envops:
+  undefined: jinja2.StrictUndefined
+  trim_blocks: true
+  lstrip_blocks: true
+_message_after_copy: |
+  {{ repo_name }} scaffolded successfully.
+
+  Next steps:
+    cd {{ _copier_conf.dst_path }}
+    {% if use_precommit %}pre-commit install
+    pre-commit install --hook-type commit-msg
+    {% endif %}
+    {% if include_shell_tooling %}shellcheck **/*.sh{% endif %}
+    Start coding{% if languages %} in {{ languages | join(', ') }}{% endif %}.
+  {% if use_apm %}apm install   # if apm not auto-detected during scaffold{% endif %}
+  {% if ci_provider == 'github' %}
+  Repository settings:
+    Enable "Require signed commits" in branch protection rulesets.
+    Enable Dependabot alerts and security updates.
+  {% endif %}
+_message_after_update: |
+  {{ repo_name }} updated from {{ _version_from }} to {{ _version_to }}.
+  Review changes with: git diff
+  {% if use_precommit %}Re-run: pre-commit install{% endif %}
+repo_name:
+  type: str
+  help: Repository name (kebab-case)
+  default: my-project
+  validator: "{% if not (repo_name | regex_search('^[a-z][a-z0-9-]*$')) %}Must be kebab-case (lowercase, hyphens, no spaces){% endif %}"
+repo_description:
+  type: str
+  help: One-line description
+  default: ""
+author_name:
+  type: str
+  help: Author or organization name
+  default: ""
+author_email:
+  type: str
+  help: Author or organization email
+  default: ""
+  validator: "{% if author_email and not (author_email | regex_search('.+@.+\\..+')) %}Must be a valid email or left empty{% endif %}"
+license_type:
+  type: str
+  help: License
+  choices:
+    - MIT
+    - Apache-2.0
+    - GPL-3.0
+    - proprietary
+  default: MIT
+languages:
+  type: yaml
+  help: Programming languages used
+  multiselect: true
+  choices:
+    - python
+    - javascript
+    - typescript
+    - go
+    - rust
+    - dotnet
+    - tofu
+  default: []
+# ── computed helpers (available to subsequent when: conditions) ──
+has_node:
+  type: bool
+  default: "{{ 'javascript' in languages or 'typescript' in languages }}"
+  when: false
+has_python:
+  type: bool
+  default: "{{ 'python' in languages }}"
+  when: false
+has_typescript:
+  type: bool
+  default: "{{ 'typescript' in languages }}"
+  when: false
+has_go:
+  type: bool
+  default: "{{ 'go' in languages }}"
+  when: false
+has_rust:
+  type: bool
+  default: "{{ 'rust' in languages }}"
+  when: false
+has_dotnet:
+  type: bool
+  default: "{{ 'dotnet' in languages }}"
+  when: false
+has_tofu:
+  type: bool
+  default: "{{ 'tofu' in languages }}"
+  when: false
+# ── language-specific interactive questions ──
+tofu_context:
+  type: str
+  help: OpenTofu usage context
+  choices:
+    - org
+    - app
+  default: org
+  when: "{{ has_tofu }}"
+go_scaffolding:
+  type: str
+  help: Go directory layout
+  choices:
+    - application
+    - tooling
+  default: application
+  when: "{{ has_go }}"
+go_module_path:
+  type: str
+  help: Go module path
+  default: "{{ 'github.com/' + (author_name | default('user') | lower) + '/' + repo_name }}"
+  when: "{{ has_go }}"
+dotnet_namespace:
+  type: str
+  help: .NET root namespace
+  default: "{{ repo_name | replace('-', ' ') | title | replace(' ', '') }}"
+  when: "{{ has_dotnet }}"
+python_scaffolding:
+  type: str
+  help: Python directory layout
+  choices:
+    - application
+    - tooling
+  default: application
+  when: "{{ has_python }}"
+node_package_manager:
+  type: str
+  help: Node package manager
+  choices:
+    - npm
+    - pnpm
+    - yarn
+    - bun
+  default: npm
+  when: "{{ has_node }}"
+ci_provider:
+  type: str
+  help: CI/CD provider
+  choices: |
+    {% if languages | length > 0 %}
+    - github
+    - gitlab
+    {% else %}
+    - none
+    {% endif %}
+  default: "{% if languages | length > 0 %}github{% else %}none{% endif %}"
+use_precommit:
+  type: bool
+  help: Enable pre-commit hooks?
+  default: true
+use_commitlint:
+  type: bool
+  help: Enforce Conventional Commits via commitlint?
+  default: "{{ languages | length > 0 }}"
+include_code_of_conduct:
+  type: bool
+  help: Include a Code of Conduct?
+  default: false
+include_shell_tooling:
+  type: bool
+  help: Include shell tooling configs?
+  default: false
+use_apm:
+  type: bool
+  help: Scaffold apm.yml for agent dependency management?
+  default: false
+apm_packages:
+  type: yaml
+  default: []
+  when: false
+# ── remaining computed values ──
+project_slug:
+  type: str
+  default: "{{ repo_name | lower | replace('-', '_') | replace(' ', '_') }}"
+  when: false
+copyright_year:
+  type: str
+  default: "{% now 'utc', '%Y' %}"
+  when: false
+go_directive:
+  type: str
+  default: "1.26"
+  when: false

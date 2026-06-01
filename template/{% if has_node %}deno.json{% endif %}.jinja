@@ -1,0 +1,19 @@
+{
+  "fmt": {
+    "semiColons": true,
+    "singleQuote": true,
+    "lineWidth": 100,
+    "indentWidth": 2,
+    "useTabs": false
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  }{% if has_typescript %},
+  "compilerOptions": {
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  }{% endif %}
+}

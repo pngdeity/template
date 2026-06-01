@@ -1,0 +1,36 @@
+This project uses [TASKS.md](https://github.com/tasksmd/tasks.md) for agent and human task tracking.
+
+## Format
+
+Tasks live under four priority headings:
+```
+## P0  — System broken or users blocked. Drop everything.
+## P1  — Core work that should ship. Default for planned features.
+## P2  — Valuable but not blocking. After P0 and P1 are clear.
+## P3  — Someday. Kept for reference, not actively worked.
+```
+
+Each task is a Markdown checkbox:
+```markdown
+- [ ] Short imperative description
+  - **ID**: auth-fix
+  - **Tags**: backend, auth
+  - **Details**: Implementation guidance and context
+  - **Files**: `src/auth/refresh.ts`
+  - **Acceptance**: Definition of done
+  - **Blocked by**: other-task-id
+```
+
+## Rules
+
+- **Completed tasks are removed**, never checked off. Git log is your history.
+- **Sub-tasks** use nested `- [x]` checkboxes to track progress. Parent owns all sub-tasks.
+- **Promote to separate tasks** when steps can be parallelized or span multiple sessions. Use `**Blocked by**:` for dependencies.
+- **Claim tasks** by appending `(@your-name)` before starting work.
+- **Add new tasks** you discover during implementation — use P2 if unsure of priority.
+
+## Validation
+
+```bash
+npx @tasks-md/lint TASKS.md
+```

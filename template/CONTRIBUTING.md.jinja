@@ -1,0 +1,57 @@
+# Contributing
+
+## Getting Started
+
+1. Fork the repository
+2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/{{ repo_name }}.git`
+3. Create a feature branch: `git checkout -b feat/my-feature`
+4. Make your changes
+5. Push to your fork: `git push origin feat/my-feature`
+6. Open a Pull Request
+
+## Development Setup
+
+{% if 'python' in languages %}{% include 'template/_partials/setup-python.jinja' %}{% endif %}
+{% if has_node %}{% include 'template/_partials/setup-node.jinja' %}{% endif %}
+{% if 'go' in languages %}{% include 'template/_partials/setup-go.jinja' %}{% endif %}
+{% if 'rust' in languages %}{% include 'template/_partials/setup-rust.jinja' %}{% endif %}
+{% if 'dotnet' in languages %}{% include 'template/_partials/setup-dotnet.jinja' %}{% endif %}
+{% if 'tofu' in languages %}{% include 'template/_partials/setup-tofu.jinja' %}
+{% include 'template/_partials/tofu-layers.jinja' %}
+{% endif %}
+
+## Pull Request Requirements
+
+{% if use_commitlint %}
+{% include 'template/_partials/conventional-commits.jinja' %}
+{% endif %}
+{% if use_precommit %}
+- Pre-commit checks must pass
+{% endif %}
+- All tests must pass
+- New features include tests
+- Documentation is updated as needed
+- PRs target the `main` branch
+- All commits must be GPG-signed: `git config --global commit.gpgsign true`
+
+## Code Review
+
+All submissions require review. CODEOWNERS are automatically assigned as reviewers.
+
+{% if use_apm %}{% include 'template/_partials/setup-apm.jinja' %}{% endif %}
+
+## Testing
+
+{% include 'template/_partials/testing.jinja' %}
+
+## Linting & Formatting
+
+{% include 'template/_partials/linting.jinja' %}
+
+## Task Tracking
+
+{% include 'template/_partials/tasking.jinja' %}
+
+## Inline Annotations
+
+{% include 'template/_partials/todo-standards.jinja' %}

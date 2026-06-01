@@ -1,0 +1,32 @@
+name: APM Drift Sweep
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/apm-action@v1
+      - name: Audit
+        run: apm audit --ci --no-fail-fast -o drift.sarif
+        continue-on-error: true
+        env:
+          GITHUB_APM_PAT: ${{ secrets.APM_PAT }}
+      - if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: drift.sarif
+          category: apm-drift-sweep
+      - name: Check for outdated dependencies
+        run: apm outdated > apm-outdated.txt
+        if: always()
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apm-drift-report
+          path: |
+            drift.sarif
+            apm-outdated.txt

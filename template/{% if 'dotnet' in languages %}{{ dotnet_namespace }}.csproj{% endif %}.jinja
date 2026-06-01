@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>{{ dotnet_namespace }}</RootNamespace>
+    <AssemblyName>{{ dotnet_namespace }}</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!--
+    Output types (uncomment one):
+      Console app:  <OutputType>Exe</OutputType>
+      Windows app:  <OutputType>WinExe</OutputType>
+      Class library: default (no OutputType needed)
+      Web app:      change Sdk to Microsoft.NET.Sdk.Web above
+
+    To publish as a NuGet package:
+      <IsPackable>true</IsPackable>
+      <PackageId>{{ dotnet_namespace }}</PackageId>
+  -->
+
+  <ItemGroup>
+    <!-- Package version comes from Directory.Packages.props -->
+    <!-- <PackageReference Include="PackageName" /> -->
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,39 @@
+# Security Policy
+
+## Reporting a Vulnerability
+
+To report a security vulnerability, please **do not** open a public issue.
+
+Instead, send an email to `SECURITY_CONTACT_EMAIL` with:
+
+- A clear description of the vulnerability
+- Steps to reproduce
+- Affected versions
+- Any potential mitigations you have identified
+
+We aim to acknowledge reports within 48 hours and provide a resolution timeline within 5 business days.
+
+## Supported Versions
+
+| Version | Supported |
+|---------|-----------|
+| Latest release | Yes |
+| Previous releases | No |
+
+## Disclosure Policy
+
+We follow a coordinated disclosure process:
+
+1. Reporter submits vulnerability privately
+2. Maintainers verify and develop a fix
+3. Fix is released as a patch version
+4. Public disclosure 30 days after the fix, or sooner if mutually agreed
+
+## Security Best Practices for Contributors
+
+- Never commit secrets, API keys, or credentials
+- Use environment variables for sensitive configuration
+{% if use_precommit %}
+- Pre-commit hooks scan for secrets before each commit
+{% endif %}
+- Keep dependencies updated — Dependabot alerts are reviewed weekly

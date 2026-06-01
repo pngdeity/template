@@ -1,0 +1,33 @@
+name: APM Audit
+
+on:
+  pull_request:
+    paths:
+      - apm.yml
+      - apm.lock.yaml
+      - .apm/**
+      - .github/**
+      - .claude/**
+      - .cursor/**
+      - .opencode/**
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install & audit
+        id: apm
+        uses: microsoft/apm-action@v1
+        with:
+          audit-report: true
+        env:
+          GITHUB_APM_PAT: ${{ secrets.APM_PAT }}
+      - if: always() && steps.apm.outputs.audit-report-path
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.apm.outputs.audit-report-path }}
+          category: apm-audit

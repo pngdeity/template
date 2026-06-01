@@ -1,0 +1,42 @@
+# Default owners for the entire repository
+* @org/maintainers
+
+{% if has_node %}
+# Frontend
+/src/components/ @org/frontend-team
+*.tsx @org/frontend-team
+*.jsx @org/frontend-team
+{% endif %}
+
+{% if 'python' in languages %}
+# Python
+/src/ @org/maintainers
+/tests/ @org/maintainers
+{% endif %}
+
+{% if 'go' in languages %}
+# Go services
+/cmd/ @org/maintainers
+/internal/ @org/maintainers
+{% endif %}
+
+{% if 'dotnet' in languages %}
+# .NET
+*.cs @org/maintainers
+*.csproj @org/maintainers
+*.sln @org/maintainers
+{% endif %}
+
+{% if 'tofu' in languages %}
+# Infrastructure as Code
+*.tf @org/devops-team
+*.tfvars @org/devops-team
+{% endif %}
+
+# CI and infrastructure
+{% if ci_provider == 'github' %}.github/{% endif %} @org/devops-team
+Dockerfile @org/devops-team
+
+# Documentation
+/docs/ @org/maintainers
+*.md @org/maintainers

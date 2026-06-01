@@ -1,0 +1,35 @@
+name: {{ repo_name }}
+version: 0.1.0
+description: {{ repo_description or repo_name }}
+author: {{ author_name or 'Your Name' }}{% if author_email %} <{{ author_email }}>{% endif %}
+{% if license_type == 'MIT' %}
+license: MIT
+{% elif license_type == 'Apache-2.0' %}
+license: Apache-2.0
+{% elif license_type == 'GPL-3.0' %}
+license: GPL-3.0-only
+{% else %}
+license: UNLICENSED
+{% endif %}
+{% if apm_packages %}
+
+dependencies:
+  apm:
+{% for pkg in apm_packages %}"    - {{ pkg }}"
+{% endfor %}{% else %}
+# Add agent primitives your project depends on.
+# Examples:
+# dependencies:
+#   apm:
+#     - microsoft/apm-sample-package#v1.0.0
+#     - github/awesome-copilot/skills/review-and-refactor
+#     - git: https://gitlab.com/acme/coding-standards.git
+#       path: instructions/security
+#       ref: v2.0
+#   mcp:
+#     - io.github.github/github-mcp-server
+{% endif %}
+
+# Named scripts run with `apm run <name>`.
+# scripts:
+#   review: copilot -p .apm/prompts/design-review.prompt.md

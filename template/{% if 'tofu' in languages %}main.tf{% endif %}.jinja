@@ -1,0 +1,21 @@
+# ---------------------------------------------------------------------------
+# Layered infrastructure: each resource group depends on the one above it.
+# Add your providers, resources, and modules below.
+# {% if tofu_context == 'org' %}
+# Typical layers for an org-infra repo:
+#   Layer 1 — Networking (VPC, subnets, DNS)
+#   Layer 2 — State (databases, caches)
+#   Layer 3 — Compute (clusters, serverless)
+#   Layer 4 — Ingress (load balancers, TLS)
+#   Layer 5 — Observability (monitoring, logging)
+# {% endif %}
+# ---------------------------------------------------------------------------
+
+# Uncomment and configure your provider blocks:
+# provider "aws" {
+#   region = var.aws_region
+# }
+
+{% if tofu_context == 'app' %}
+{% include 'template/_partials/tofu-remote-state.jinja' %}
+{% endif %}

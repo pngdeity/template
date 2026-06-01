@@ -1,0 +1,30 @@
+{% if 'python' in languages %}
+```bash
+uv run pytest
+```
+{% endif %}
+{% if has_node %}
+```bash
+npm test
+```
+{% endif %}
+{% if 'go' in languages %}
+```bash
+go test ./...
+```
+{% endif %}
+{% if 'rust' in languages %}
+```bash
+cargo test
+```
+{% endif %}
+{% if 'dotnet' in languages %}
+```bash
+dotnet test
+```
+{% endif %}
+{% if 'tofu' in languages %}
+```bash
+tofu fmt -check && tofu validate && tofu plan -detailed-exitcode
+```
+{% endif %}

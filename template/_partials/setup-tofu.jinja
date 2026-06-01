@@ -1,0 +1,11 @@
+```bash
+tofu init && tofu plan && tofu apply
+```
+
+{% if tofu_context == 'app' %}
+When deploying app-level infrastructure, ensure the org infra remote state is accessible:
+```bash
+cd ../org-infra && tofu output  # verify you can read org outputs
+cd - && source .env && tofu init && tofu plan && tofu apply
+```
+{% endif %}

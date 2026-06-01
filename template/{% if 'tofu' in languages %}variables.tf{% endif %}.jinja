@@ -1,0 +1,25 @@
+variable "example_required" {
+  description = "A required variable with no default — must be set at apply time"
+  type        = string
+}
+
+# variable "example_optional" {
+#   description = "An optional variable with a default value"
+#   type        = string
+#   default     = "default-value"
+# }
+
+# variable "example_sensitive" {
+#   description = "A secret value — never appears in plan output or logs"
+#   type        = string
+#   sensitive   = true
+# }
+
+# variable "example_validated" {
+#   description = "A variable with input validation"
+#   type        = string
+#   validation {
+#     condition     = can(regex("^[a-z][a-z0-9-]*$", var.example_validated))
+#     error_message = "Must be lowercase, alphanumeric + hyphens only."
+#   }
+# }

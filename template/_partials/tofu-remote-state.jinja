@@ -1,0 +1,36 @@
+# Pull outputs from the organization infrastructure repository.
+# Uncomment your backend provider and configure accordingly.
+
+# data "terraform_remote_state" "org_infra" {
+#   backend = "gcs"
+#   config = {
+#     bucket = "org-infra-tfstate"
+#     prefix = "terraform/state"
+#   }
+# }
+
+# data "terraform_remote_state" "org_infra" {
+#   backend = "s3"
+#   config = {
+#     bucket = "org-infra-tfstate"
+#     key    = "terraform.tfstate"
+#     region = "us-east-1"
+#   }
+# }
+
+# data "terraform_remote_state" "org_infra" {
+#   backend = "remote"
+#   config = {
+#     hostname     = "app.terraform.io"
+#     organization = "{{ repo_name }}"
+#     workspaces = {
+#       name = "org-infra-production"
+#     }
+#   }
+# }
+
+# locals {
+#   # Reference org outputs as locals for cleaner resource configs:
+#   vpc_id     = data.terraform_remote_state.org_infra.outputs.vpc_id
+#   subnet_ids = data.terraform_remote_state.org_infra.outputs.subnet_ids
+# }

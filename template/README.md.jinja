@@ -1,0 +1,88 @@
+# {{ repo_name }}
+
+{{ repo_description }}
+
+{% if ci_provider == 'github' %}
+[![CI](https://github.com/{{ author_name | default('user') }}/{{ repo_name }}/actions/workflows/ci.yml/badge.svg)](https://github.com/{{ author_name | default('user') }}/{{ repo_name }}/actions)
+{% endif %}
+{% if license_type != 'proprietary' %}
+[![License](https://img.shields.io/badge/license-{{ license_type | replace('-', '--') }}-blue.svg)](LICENSE)
+{% endif %}
+{% if use_precommit %}
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+{% endif %}
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Development](#development)
+- [Task Tracking](#task-tracking)
+- [Inline Annotations](#inline-annotations)
+{% if use_commitlint %}- [Commit Convention](#commit-convention)
+{% endif %}- [License](#license)
+
+## Quick Start
+
+```bash
+git clone {{ repo_name }}.git
+cd {{ repo_name }}
+```
+
+{% if 'python' in languages %}
+{% include 'template/_partials/setup-python.jinja' %}
+{% endif %}
+{% if has_node %}
+{% include 'template/_partials/setup-node.jinja' %}
+{% endif %}
+{% if 'go' in languages %}
+{% include 'template/_partials/setup-go.jinja' %}
+{% endif %}
+{% if 'rust' in languages %}
+{% include 'template/_partials/setup-rust.jinja' %}
+{% endif %}
+{% if 'dotnet' in languages %}
+{% include 'template/_partials/setup-dotnet.jinja' %}
+{% endif %}
+{% if 'tofu' in languages %}
+{% include 'template/_partials/setup-tofu.jinja' %}
+{% endif %}
+
+## Development
+
+{% if use_precommit %}
+Pre-commit hooks enforce formatting and linting. Install after cloning:
+
+```bash
+pre-commit install
+pre-commit install --hook-type commit-msg
+```
+{% endif %}
+
+Testing:
+
+{% include 'template/_partials/testing.jinja' %}
+
+Linting:
+
+{% include 'template/_partials/linting.jinja' %}
+
+## Task Tracking
+
+{% include 'template/_partials/tasking.jinja' %}
+
+## Inline Annotations
+
+{% include 'template/_partials/todo-standards.jinja' %}
+{% if use_commitlint %}
+## Commit Convention
+
+{% include 'template/_partials/conventional-commits.jinja' %}
+{% endif %}
+
+## License
+
+{% if license_type != 'proprietary' %}
+{{ license_type }} — see [LICENSE](LICENSE) for details.
+{% else %}
+Proprietary — all rights reserved.
+{% endif %}

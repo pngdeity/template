@@ -1,0 +1,45 @@
+# rumdl markdown linter configuration
+# Conservative defaults: structural rules disabled, cosmetic rules diagnostic-only.
+# The OpenCode formatter auto-fixes only whitespace/cosmetic rules via --fixable.
+#
+# Project-specific overrides: edit this file or disable with --no-config.
+#
+# See: https://rumdl.dev for rule documentation.
+
+[global]
+disable = [
+    "MD001",   # heading-increment
+    "MD007",   # ul-indent
+    "MD013",   # line-length
+    "MD014",   # commands-show-output
+    "MD022",   # blanks-around-headings
+    "MD026",   # trailing-punctuation
+    "MD028",   # blank-line-blockquote
+    "MD029",   # ol-prefix
+    "MD031",   # blanks-around-fences
+    "MD032",   # blanks-around-lists
+    "MD034",   # bare-urls
+    "MD036",   # no-emphasis-as-heading
+    "MD040",   # fenced-code-language
+    "MD041",   # first-line-h1
+    "MD056",   # table-column-count
+    "MD058",   # blanks-around-tables
+    "MD060",   # table-column-style
+]
+flavor = "standard"
+
+[MD024]
+siblings-only = true
+
+[MD033]
+allowed-elements = [
+    "br",
+    "char",
+    "details",
+    "summary",
+    "img",
+    "a",
+    "sub",
+    "sup",
+    "T",
+]

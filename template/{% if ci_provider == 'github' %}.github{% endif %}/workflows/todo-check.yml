@@ -1,0 +1,30 @@
+name: Code Quality
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  tasks-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npx @tasks-md/lint TASKS.md
+
+  forbidden-inline:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          bad=$(git diff origin/main...HEAD -- '*.py' '*.ts' '*.tsx' '*.go' '*.rs' '*.cs' '*.tf' '*.sh' | grep -E '^\+.*(FIXME|HACK|BUG)\b' | grep -v '// BUG:' | grep -v '# BUG:' || true)
+          if [ -n "$bad" ]; then
+            echo "Forbidden inline tags added in this PR:"
+            echo "$bad"
+            echo
+            echo "Resolve or convert to tracked issue before merging."
+            exit 1
+          fi

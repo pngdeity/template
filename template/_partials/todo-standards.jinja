@@ -1,0 +1,19 @@
+## Inline Annotations
+
+Tag type and description in source comments. `FIXME`, `BUG`, and `HACK` are merge-blocked by CI.
+
+| Tag | Use |
+|-----|-----|
+| `TODO` | Planned work |
+| `FIXME` | Broken behavior |
+| `HACK` | Fragile workaround |
+| `BUG` | Active defect |
+| `NOTE` | Informational, no action |
+
+Format: uppercase tag, colon, imperative description. Include an issue reference when possible.
+```
+// TODO: implement retry logic (#42)
+// FIXME: panics on empty input
+```
+
+Never merge `FIXME`, `BUG`, or `HACK` into `main`. Convert to a tracked issue or resolve before merging.

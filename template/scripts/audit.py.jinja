@@ -1,0 +1,146 @@
+"""Audit this repository against the pngdeity template standard."""
+
+import os
+import sys
+
+
+EXPECTED_LANGUAGES = {{ languages | tojson }}
+EXPECTED_CI_PROVIDER = "{{ ci_provider }}"
+
+REQUIRED_ROOT_FILES = [
+    ".gitignore",
+    ".gitattributes",
+    ".editorconfig",
+    "README.md",
+    "LICENSE",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "CHANGELOG.md",
+    "CODEOWNERS",
+    "TASKS.md",
+]
+
+LANG_SPECIFIC_FILES = {
+    "python": ["pyproject.toml"],
+    "typescript": ["deno.json", "package.json"],
+    "javascript": ["deno.json", "package.json"],
+    "go": [".golangci.yml", ".go-version", "go.mod"],
+    "rust": ["rustfmt.toml", "rust-toolchain.toml", "Cargo.toml"],
+    "dotnet": ["global.json", "Directory.Build.props", "NuGet.config", "Directory.Packages.props", "{{ dotnet_namespace }}.csproj"],
+    "tofu": [
+        ".tflint.hcl",
+        ".terraform-docs.yml",
+        "versions.tf",
+        "main.tf",
+        "variables.tf",
+        "outputs.tf",
+        "backend.tf",
+        ".env.example",
+    ],
+}
+
+CI_SPECIFIC_FILES = {
+    "github": [
+        ".github/workflows/verify-signed-commits.yml",
+        ".github/workflows/todo-check.yml",
+{% if 'go' in languages %}        ".github/workflows/go.yml",
+{% endif %}{% if use_apm %}        ".github/workflows/apm-audit.yml",
+        ".github/workflows/apm-drift.yml",
+{% endif %}    ],
+    "gitlab": [".gitlab-ci.yml"],
+}
+
+LANG_DIRECTORIES = {
+    {% if 'python' in languages %}{% if python_scaffolding == 'application' %}"python": ["src", "tests"],{% endif %}{% endif %}
+    "typescript": ["src", "tests"],
+    "javascript": ["src", "tests"],
+    {% if 'go' in languages %}{% if go_scaffolding == 'application' %}"go": ["cmd", "internal"],{% endif %}{% endif %}
+    "rust": ["src", "tests"],
+    "dotnet": ["src", "tests"],
+}
+
+REQUIRED_DIRS = ["docs", "scripts"]
+
+
+def audit(repo_root="."):
+    issues = []
+
+    for f in REQUIRED_ROOT_FILES:
+        if not os.path.exists(os.path.join(repo_root, f)):
+            issues.append(f"Missing root file: {f}")
+
+    for lang in EXPECTED_LANGUAGES:
+        for f in LANG_SPECIFIC_FILES.get(lang, []):
+            if not os.path.exists(os.path.join(repo_root, f)):
+                issues.append(f"Missing {lang} config: {f}")
+
+    for f in CI_SPECIFIC_FILES.get(EXPECTED_CI_PROVIDER, []):
+        if not os.path.exists(os.path.join(repo_root, f)):
+            issues.append(f"Missing CI config: {f}")
+
+    {% if use_precommit %}
+    if not os.path.exists(os.path.join(repo_root, ".pre-commit-config.yaml")):
+        issues.append("Missing: .pre-commit-config.yaml")
+    {% endif %}
+    {% if use_commitlint %}
+    if not os.path.exists(os.path.join(repo_root, "commitlint.config.mjs")):
+        issues.append("Missing: commitlint.config.mjs")
+    {% endif %}
+    {% if include_shell_tooling %}
+    if not os.path.exists(os.path.join(repo_root, ".shellcheckrc")):
+        issues.append("Missing: .shellcheckrc")
+    {% endif %}
+    {% if include_code_of_conduct %}
+    if not os.path.exists(os.path.join(repo_root, "CODE_OF_CONDUCT.md")):
+        issues.append("Missing: CODE_OF_CONDUCT.md")
+    {% endif %}
+    {% if use_apm %}
+    if not os.path.exists(os.path.join(repo_root, "apm.yml")):
+        issues.append("Missing: apm.yml")
+    {% endif %}
+
+    for d in REQUIRED_DIRS:
+        if not os.path.isdir(os.path.join(repo_root, d)):
+            issues.append(f"Missing directory: {d}/")
+
+    seen_dirs = set(REQUIRED_DIRS)
+    for lang in EXPECTED_LANGUAGES:
+        for d in LANG_DIRECTORIES.get(lang, []):
+            if d not in seen_dirs:
+                seen_dirs.add(d)
+                if not os.path.isdir(os.path.join(repo_root, d)):
+                    issues.append(f"Missing {lang} directory: {d}/")
+
+    total_checks = (
+        len(REQUIRED_ROOT_FILES)
+        + sum(len(LANG_SPECIFIC_FILES.get(l, [])) for l in EXPECTED_LANGUAGES)
+        + len(CI_SPECIFIC_FILES.get(EXPECTED_CI_PROVIDER, []))
+        + len(REQUIRED_DIRS)
+        + sum(len(LANG_DIRECTORIES.get(l, [])) for l in EXPECTED_LANGUAGES)
+        {% if use_precommit %}+ 1{% endif %}
+        {% if use_commitlint %}+ 1{% endif %}
+        {% if include_shell_tooling %}+ 1{% endif %}
+        {% if include_code_of_conduct %}+ 1{% endif %}
+        {% if use_apm %}+ 1{% endif %}
+    )
+
+    score = total_checks - len(issues)
+    ratio = score / total_checks if total_checks > 0 else 1.0
+    grade = (
+        "A" if ratio >= 0.95
+        else "B" if ratio >= 0.80
+        else "C" if ratio >= 0.60
+        else "D"
+    )
+
+    return {"grade": grade, "score": f"{score}/{total_checks}", "ratio": ratio, "issues": issues}
+
+
+if __name__ == "__main__":
+    result = audit(".")
+    print(f"Grade: {result['grade']} ({result['score']}, {result['ratio']:.0%})")
+    if result["issues"]:
+        print()
+        for issue in result["issues"]:
+            print(f"  - {issue}")
+    sys.exit(0 if result["grade"] == "A" else 1)

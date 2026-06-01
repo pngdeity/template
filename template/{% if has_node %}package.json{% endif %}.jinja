@@ -1,0 +1,11 @@
+{% set npm_license = license_type %}
+{% if license_type == 'GPL-3.0' %}{% set npm_license = 'GPL-3.0-only' %}{% endif %}
+{% if license_type == 'proprietary' %}{% set npm_license = 'UNLICENSED' %}{% endif %}
+{
+  "name": "{{ repo_name }}",
+  "version": "0.1.0",
+  "private": true,
+  "description": "{{ repo_description }}",
+  "license": "{{ npm_license }}"{% if node_package_manager == 'npm' %},
+  "packageManager": "npm@latest"{% endif %}
+}

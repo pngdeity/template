@@ -1,0 +1,26 @@
+name: Verify Signed Commits
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: |
+          commits=$(git log --format='%H' origin/main..HEAD)
+          if [ -z "$commits" ]; then
+            echo "No commits to check"
+            exit 0
+          fi
+          unsigned=$(git log --format='%G?' origin/main..HEAD | grep -vc 'G')
+          if [ "$unsigned" -ne 0 ]; then
+            echo "Found $unsigned unsigned commit(s). All commits must be GPG-signed."
+            git log --format='  %h %s (%an) — signature: %G?' origin/main..HEAD
+            exit 1
+          fi
+          echo "All commits are GPG-signed."

@@ -1,0 +1,12 @@
+```bash
+CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.version=$VERSION" -o bin/ ./cmd/...
+```
+
+| Flag | Purpose |
+|------|---------|
+| `CGO_ENABLED=0` | Pure Go static binary; no C dependencies; required for cross-compilation |
+| `-trimpath` | Removes local filesystem paths; enables reproducible builds |
+| `-s` | Strips symbol table from binary (~20% smaller) |
+| `-w` | Strips DWARF debug info from binary (~10% smaller) |
+| `-X main.version=$VERSION` | Injects version string at link time; variable must be `var version string` in `main` |
+| `-o bin/` | Output directory for compiled binaries |

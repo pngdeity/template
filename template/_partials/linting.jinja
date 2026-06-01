@@ -1,0 +1,40 @@
+{% if 'python' in languages %}
+```bash
+uv run ruff check . && uv run ruff format --check .
+uv run mypy src/
+```
+{% endif %}
+{% if has_node %}
+```bash
+deno fmt --check && deno lint
+```
+{% endif %}
+{% if 'go' in languages %}
+```bash
+golangci-lint run && govulncheck ./...
+```
+{% endif %}
+{% if 'rust' in languages %}
+```bash
+cargo fmt --check && cargo clippy -- -D warnings
+```
+{% endif %}
+{% if 'dotnet' in languages %}
+```bash
+dotnet format --verify-no-changes
+dotnet build --no-restore
+```
+{% endif %}
+{% if 'tofu' in languages %}
+```bash
+tofu fmt -check -recursive
+tflint --recursive
+terraform-docs markdown table --output-file README.md --output-mode inject .
+```
+{% endif %}
+{% if include_shell_tooling %}
+```bash
+shellcheck **/*.sh
+shfmt -d .
+```
+{% endif %}

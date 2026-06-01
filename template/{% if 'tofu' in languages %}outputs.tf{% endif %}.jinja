@@ -1,0 +1,23 @@
+{% if tofu_context == 'org' %}
+# Outputs expose values to consuming application repos via terraform_remote_state.
+# Treat outputs as a public API: rename outputs with caution.
+
+# output "vpc_id" {
+#   description = "VPC identifier for application subnet placement"
+#   value       = module.networking.vpc_id
+# }
+
+# output "subnet_ids" {
+#   description = "Private subnet identifiers"
+#   value       = module.networking.private_subnet_ids
+# }
+
+# output "cluster_name" {
+#   description = "Nomad cluster name for job targeting"
+#   value       = nomad_cluster.primary.name
+# }
+{% else %}
+# Application-level infrastructure rarely exports outputs.
+# If your app's infra owns a unique endpoint or connection string,
+# emit it here so CI/CD can reference it.
+{% endif %}

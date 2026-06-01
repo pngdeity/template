@@ -1,0 +1,21 @@
+{% include 'template/_partials/gitignore-base.jinja' %}
+{% if use_apm %}apm_modules/
+{% endif %}
+{% if 'python' in languages %}
+{% include 'template/_partials/gitignore-python.jinja' %}
+{% endif %}
+{% if has_node %}
+{% include 'template/_partials/gitignore-node.jinja' %}
+{% endif %}
+{% if 'go' in languages %}
+{% include 'template/_partials/gitignore-go.jinja' %}
+{% endif %}
+{% if 'rust' in languages %}
+{% include 'template/_partials/gitignore-rust.jinja' %}
+{% endif %}
+{% if 'dotnet' in languages %}
+{% include 'template/_partials/gitignore-dotnet.jinja' %}
+{% endif %}
+{% if 'tofu' in languages %}
+{% include 'template/_partials/gitignore-tofu.jinja' %}
+{% endif %}

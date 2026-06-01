@@ -1,0 +1,16 @@
+{% if tofu_context == 'org' %}
+| Layer | File | Purpose |
+|-------|------|---------|
+| Providers | `versions.tf` | Required provider versions and sources |
+| State | `backend.tf` | Remote state backend configuration |
+| Variables | `variables.tf` | Input variables — required, optional, sensitive, validated |
+| Resources | `main.tf` | Provider blocks and resource definitions |
+| Outputs | `outputs.tf` | Values consumed by application repos via remote state |
+{% else %}
+| Step | Tool | Purpose |
+|------|------|---------|
+| 1. Source env | `source .env` | Load secrets into environment |
+| 2. Init | `tofu init` | Install providers and backend |
+| 3. Plan | `tofu plan` | Preview changes |
+| 4. Apply | `tofu apply` | Deploy infrastructure |
+{% endif %}

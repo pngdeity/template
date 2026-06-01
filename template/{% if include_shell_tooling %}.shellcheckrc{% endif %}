@@ -1,0 +1,7 @@
+# Enable all optional checks
+enable=all
+
+# Disabled rules:
+# SC1090 - Can't follow non-constant source (shellcheck can't resolve dynamic paths)
+# SC1091 - Not following sourced file (shellcheck can't find files outside the repo)
+disable=SC1090,SC1091

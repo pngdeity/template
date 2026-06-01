@@ -1,0 +1,46 @@
+[package]
+name = "{{ repo_name | replace('-', '_') }}"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.96"
+{%- if author_name %}
+authors = ["{{ author_name }} <{{ author_email }}>"]
+{%- endif %}
+{%- if repo_description %}
+description = """\
+{{ repo_description }}"""
+{%- endif %}
+{%- if license_type == 'MIT' %}
+license = "MIT OR Apache-2.0"
+{%- elif license_type == 'Apache-2.0' %}
+license = "Apache-2.0"
+{%- elif license_type == 'GPL-3.0' %}
+license = "GPL-3.0-only"
+{%- elif license_type == 'proprietary' %}
+license = "UNLICENSED"
+{%- endif %}
+repository = "https://github.com/{{ author_name | default('user') }}/{{ repo_name }}"
+
+[dependencies]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[profile.dev.package."*"]
+opt-level = 2
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "warn"
+expect_used = "warn"
+
+[lints.rust]
+unsafe_code = "warn"
