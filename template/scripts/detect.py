@@ -18,12 +18,11 @@ LANGUAGE_MARKERS = {
 
 CI_MARKERS = {
     "github": [".github/workflows"],
-    "gitlab": [".gitlab-ci.yml"],
 }
 
 TOOL_MARKERS = {
     "use_precommit": [".pre-commit-config.yaml"],
-    "use_commitlint": ["commitlint.config.js", "commitlint.config.mjs"],
+    "use_commitizen": [".cz.toml", "pyproject.toml"],
     "include_shell_tooling": ["*.sh"],
 }
 

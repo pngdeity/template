@@ -1,4 +1,4 @@
-{% if 'python' in languages %}
+{% if has_python %}
 ```bash
 uv run ruff check . && uv run ruff format --check .
 uv run mypy src/
@@ -9,23 +9,24 @@ uv run mypy src/
 deno fmt --check && deno lint
 ```
 {% endif %}
-{% if 'go' in languages %}
+{% if has_go %}
 ```bash
-golangci-lint run && govulncheck ./...
+golangci-lint run && gosec ./... && govulncheck ./...
 ```
+go install github.com/securego/gosec/v2/cmd/gosec@latest && go install golang.org/x/vuln/cmd/govulncheck@latest
 {% endif %}
-{% if 'rust' in languages %}
+{% if has_rust %}
 ```bash
 cargo fmt --check && cargo clippy -- -D warnings
 ```
 {% endif %}
-{% if 'dotnet' in languages %}
+{% if has_dotnet %}
 ```bash
 dotnet format --verify-no-changes
 dotnet build --no-restore
 ```
 {% endif %}
-{% if 'tofu' in languages %}
+{% if has_tofu %}
 ```bash
 tofu fmt -check -recursive
 tflint --recursive

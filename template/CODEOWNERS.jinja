@@ -1,42 +1,57 @@
+{% if codeowners_maintainers %}
 # Default owners for the entire repository
-* @org/maintainers
+* {{ codeowners_maintainers }}
+{% endif %}
 
 {% if has_node %}
+{% if codeowners_frontend %}
 # Frontend
-/src/components/ @org/frontend-team
-*.tsx @org/frontend-team
-*.jsx @org/frontend-team
+/src/components/ {{ codeowners_frontend }}
+*.tsx {{ codeowners_frontend }}
+*.jsx {{ codeowners_frontend }}
+{% endif %}
 {% endif %}
 
-{% if 'python' in languages %}
+{% if has_python %}
+{% if codeowners_maintainers %}
 # Python
-/src/ @org/maintainers
-/tests/ @org/maintainers
+/src/ {{ codeowners_maintainers }}
+/tests/ {{ codeowners_maintainers }}
+{% endif %}
 {% endif %}
 
-{% if 'go' in languages %}
+{% if has_go %}
+{% if codeowners_maintainers %}
 # Go services
-/cmd/ @org/maintainers
-/internal/ @org/maintainers
+/cmd/ {{ codeowners_maintainers }}
+/internal/ {{ codeowners_maintainers }}
+{% endif %}
 {% endif %}
 
-{% if 'dotnet' in languages %}
+{% if has_dotnet %}
+{% if codeowners_maintainers %}
 # .NET
-*.cs @org/maintainers
-*.csproj @org/maintainers
-*.sln @org/maintainers
+*.cs {{ codeowners_maintainers }}
+*.csproj {{ codeowners_maintainers }}
+*.sln {{ codeowners_maintainers }}
+{% endif %}
 {% endif %}
 
-{% if 'tofu' in languages %}
+{% if has_tofu %}
+{% if codeowners_devops %}
 # Infrastructure as Code
-*.tf @org/devops-team
-*.tfvars @org/devops-team
+*.tf {{ codeowners_devops }}
+*.tfvars {{ codeowners_devops }}
+{% endif %}
 {% endif %}
 
+{% if codeowners_devops %}
 # CI and infrastructure
-{% if ci_provider == 'github' %}.github/{% endif %} @org/devops-team
-Dockerfile @org/devops-team
+{% if ci_provider == 'github' %}.github/ {{ codeowners_devops }}{% endif %}
+{% endif %}
 
+{% if codeowners_maintainers %}
 # Documentation
-/docs/ @org/maintainers
-*.md @org/maintainers
+/docs/ {{ codeowners_maintainers }}
+*.md {{ codeowners_maintainers }}
+{% endif %}

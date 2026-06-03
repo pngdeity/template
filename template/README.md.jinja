@@ -3,7 +3,7 @@
 {{ repo_description }}
 
 {% if ci_provider == 'github' %}
-[![CI](https://github.com/{{ author_name | default('user') }}/{{ repo_name }}/actions/workflows/ci.yml/badge.svg)](https://github.com/{{ author_name | default('user') }}/{{ repo_name }}/actions)
+[![CI](https://github.com/{{ github_username | default(author_name | lower | replace(' ', '-')) }}/{{ repo_name }}/actions/workflows/ci.yml/badge.svg)](https://github.com/{{ github_username | default(author_name | lower | replace(' ', '-')) }}/{{ repo_name }}/actions)
 {% endif %}
 {% if license_type != 'proprietary' %}
 [![License](https://img.shields.io/badge/license-{{ license_type | replace('-', '--') }}-blue.svg)](LICENSE)
@@ -18,7 +18,8 @@
 - [Development](#development)
 - [Task Tracking](#task-tracking)
 - [Inline Annotations](#inline-annotations)
-{% if use_commitlint %}- [Commit Convention](#commit-convention)
+{% if use_commitizen %}- [Commit Convention](#commit-convention)
+{% endif %}{% if include_code_of_conduct %}- [Code of Conduct](#code-of-conduct)
 {% endif %}- [License](#license)
 
 ## Quick Start
@@ -28,22 +29,22 @@ git clone {{ repo_name }}.git
 cd {{ repo_name }}
 ```
 
-{% if 'python' in languages %}
+{% if has_python %}
 {% include 'template/_partials/setup-python.jinja' %}
 {% endif %}
 {% if has_node %}
 {% include 'template/_partials/setup-node.jinja' %}
 {% endif %}
-{% if 'go' in languages %}
+{% if has_go %}
 {% include 'template/_partials/setup-go.jinja' %}
 {% endif %}
-{% if 'rust' in languages %}
+{% if has_rust %}
 {% include 'template/_partials/setup-rust.jinja' %}
 {% endif %}
-{% if 'dotnet' in languages %}
+{% if has_dotnet %}
 {% include 'template/_partials/setup-dotnet.jinja' %}
 {% endif %}
-{% if 'tofu' in languages %}
+{% if has_tofu %}
 {% include 'template/_partials/setup-tofu.jinja' %}
 {% endif %}
 
@@ -73,7 +74,7 @@ Linting:
 ## Inline Annotations
 
 {% include 'template/_partials/todo-standards.jinja' %}
-{% if use_commitlint %}
+{% if use_commitizen %}
 ## Commit Convention
 
 {% include 'template/_partials/conventional-commits.jinja' %}

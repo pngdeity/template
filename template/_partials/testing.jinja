@@ -1,4 +1,4 @@
-{% if 'python' in languages %}
+{% if has_python %}
 ```bash
 uv run pytest
 ```
@@ -8,22 +8,22 @@ uv run pytest
 npm test
 ```
 {% endif %}
-{% if 'go' in languages %}
+{% if has_go %}
 ```bash
-go test ./...
+go test -race -shuffle=on -count=1 -coverprofile=coverage.out ./...
 ```
 {% endif %}
-{% if 'rust' in languages %}
+{% if has_rust %}
 ```bash
 cargo test
 ```
 {% endif %}
-{% if 'dotnet' in languages %}
+{% if has_dotnet %}
 ```bash
 dotnet test
 ```
 {% endif %}
-{% if 'tofu' in languages %}
+{% if has_tofu %}
 ```bash
 tofu fmt -check && tofu validate && tofu plan -detailed-exitcode
 ```

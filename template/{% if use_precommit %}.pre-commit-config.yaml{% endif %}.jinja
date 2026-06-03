@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/pre-commit-config.json
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -11,7 +12,11 @@ repos:
       - id: check-merge-conflict
       - id: check-added-large-files
         args: [--maxkb=500]
-{% if 'python' in languages %}
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+{% if has_python %}
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.9.0
     hooks:
@@ -35,7 +40,7 @@ repos:
         types_or: [javascript, jsx, typescript, tsx]
         pass_filenames: false
 {% endif %}
-{% if 'go' in languages %}
+{% if has_go %}
   - repo: https://github.com/dnephin/pre-commit-golang
     rev: v0.5.1
     hooks:
@@ -44,7 +49,7 @@ repos:
       - id: golangci-lint
         args: [--fast]
 {% endif %}
-{% if 'rust' in languages %}
+{% if has_rust %}
   - repo: local
     hooks:
       - id: cargo-fmt
@@ -60,7 +65,7 @@ repos:
         types: [rust]
         pass_filenames: false
 {% endif %}
-{% if 'dotnet' in languages %}
+{% if has_dotnet %}
   - repo: local
     hooks:
       - id: dotnet-format
@@ -70,7 +75,7 @@ repos:
         types: [csharp]
         pass_filenames: false
 {% endif %}
-{% if 'tofu' in languages %}
+{% if has_tofu %}
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.98.0
     hooks:
@@ -83,7 +88,20 @@ repos:
     hooks:
       - id: shellcheck
 {% endif %}
-{% if use_commitlint %}
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.15.0
+    hooks:
+      - id: yamlfmt
+  - repo: local
+    hooks:
+      - id: rumdl
+        name: rumdl
+        entry: rumdl
+        language: system
+        types: [markdown]
+        pass_filenames: false
+        # Install: cargo install rumdl
+{% if use_commitizen %}
   - repo: https://github.com/commitizen-tools/commitizen
     rev: v4.4.0
     hooks:

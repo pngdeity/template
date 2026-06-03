@@ -2,7 +2,7 @@
 name = "{{ repo_name | replace('-', '_') }}"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.96"
+rust-version = "{{ rust_version }}"
 {%- if author_name %}
 authors = ["{{ author_name }} <{{ author_email }}>"]
 {%- endif %}
@@ -19,7 +19,8 @@ license = "GPL-3.0-only"
 {%- elif license_type == 'proprietary' %}
 license = "UNLICENSED"
 {%- endif %}
-repository = "https://github.com/{{ author_name | default('user') }}/{{ repo_name }}"
+{% if ci_provider == 'github' %}repository = "https://github.com/{{ github_username | default(author_name | lower | replace(' ', '-')) }}/{{ repo_name }}"
+{% endif %}
 
 [dependencies]
 

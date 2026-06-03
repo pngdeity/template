@@ -3,26 +3,28 @@
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/{{ repo_name }}.git`
+2. Clone your fork: `git clone https://github.com/{{ github_username | default('YOUR_USERNAME') }}/{{ repo_name }}.git`
 3. Create a feature branch: `git checkout -b feat/my-feature`
 4. Make your changes
 5. Push to your fork: `git push origin feat/my-feature`
 6. Open a Pull Request
 
+{% if fork_upstream %}{% include 'template/_partials/fork-workflow.jinja' %}{% endif %}
+
 ## Development Setup
 
-{% if 'python' in languages %}{% include 'template/_partials/setup-python.jinja' %}{% endif %}
+{% if has_python %}{% include 'template/_partials/setup-python.jinja' %}{% endif %}
 {% if has_node %}{% include 'template/_partials/setup-node.jinja' %}{% endif %}
-{% if 'go' in languages %}{% include 'template/_partials/setup-go.jinja' %}{% endif %}
-{% if 'rust' in languages %}{% include 'template/_partials/setup-rust.jinja' %}{% endif %}
-{% if 'dotnet' in languages %}{% include 'template/_partials/setup-dotnet.jinja' %}{% endif %}
-{% if 'tofu' in languages %}{% include 'template/_partials/setup-tofu.jinja' %}
+{% if has_go %}{% include 'template/_partials/setup-go.jinja' %}{% endif %}
+{% if has_rust %}{% include 'template/_partials/setup-rust.jinja' %}{% endif %}
+{% if has_dotnet %}{% include 'template/_partials/setup-dotnet.jinja' %}{% endif %}
+{% if has_tofu %}{% include 'template/_partials/setup-tofu.jinja' %}
 {% include 'template/_partials/tofu-layers.jinja' %}
 {% endif %}
 
 ## Pull Request Requirements
 
-{% if use_commitlint %}
+{% if use_commitizen %}
 {% include 'template/_partials/conventional-commits.jinja' %}
 {% endif %}
 {% if use_precommit %}

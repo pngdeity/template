@@ -9,7 +9,7 @@ description = "{{ repo_description }}"
 readme = "README.md"
 license = { text = "{{ license_type }}" }
 authors = [{ name = "{{ author_name }}", email = "{{ author_email }}" }]
-requires-python = ">=3.12"
+requires-python = ">={{ python_version }}"
 
 dependencies = []
 
@@ -21,12 +21,13 @@ dev = [
     "mypy>=1.13",
 ]
 
-[project.urls]
-Repository = "https://github.com/OWNER/{{ repo_name }}"
+{% if ci_provider == 'github' %}[project.urls]
+Repository = "https://github.com/{{ github_username | default(author_name | lower | replace(' ', '-')) }}/{{ repo_name }}"
+{% endif %}
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py{{ python_version | replace('.', '') }}"
 
 [tool.ruff.lint]
 select = [
@@ -50,7 +51,7 @@ skip-magic-trailing-comma = false
 known-first-party = ["{{ project_slug }}"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "{{ python_version }}"
 strict = true
 warn_return_any = true
 warn_unused_configs = true

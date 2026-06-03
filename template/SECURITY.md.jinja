@@ -4,7 +4,7 @@
 
 To report a security vulnerability, please **do not** open a public issue.
 
-Instead, send an email to `SECURITY_CONTACT_EMAIL` with:
+Instead, send an email to `{{ author_email | default('security@example.com') }}` with:
 
 - A clear description of the vulnerability
 - Steps to reproduce
@@ -33,7 +33,4 @@ We follow a coordinated disclosure process:
 
 - Never commit secrets, API keys, or credentials
 - Use environment variables for sensitive configuration
-{% if use_precommit %}
-- Pre-commit hooks scan for secrets before each commit
-{% endif %}
 - Keep dependencies updated — Dependabot alerts are reviewed weekly

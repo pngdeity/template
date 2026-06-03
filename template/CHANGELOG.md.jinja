@@ -10,4 +10,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial scaffold
 
-[Unreleased]: https://github.com/OWNER/{{ repo_name }}/compare/v0.1.0...HEAD
+{% if ci_provider == 'github' %}[Unreleased]: https://github.com/{{ github_username | default(author_name | lower | replace(' ', '-')) }}/{{ repo_name }}/compare/v0.1.0...HEAD{% endif %}

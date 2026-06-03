@@ -5,7 +5,10 @@
   "name": "{{ repo_name }}",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "{{ repo_description }}",
-  "license": "{{ npm_license }}"{% if node_package_manager == 'npm' %},
-  "packageManager": "npm@latest"{% endif %}
+  "license": "{{ npm_license }}",
+  "scripts": {
+    "test": "node --test"
+  }
 }

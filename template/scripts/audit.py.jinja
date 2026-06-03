@@ -43,18 +43,22 @@ CI_SPECIFIC_FILES = {
     "github": [
         ".github/workflows/verify-signed-commits.yml",
         ".github/workflows/todo-check.yml",
-{% if 'go' in languages %}        ".github/workflows/go.yml",
+        ".github/workflows/secret-scan.yml",
+{% if has_go %}        ".github/workflows/go.yml",
+{% endif %}{% if has_python %}        ".github/workflows/python.yml",
+{% endif %}{% if has_node %}        ".github/workflows/node.yml",
+{% endif %}{% if has_rust %}        ".github/workflows/rust.yml",
+{% endif %}{% if has_dotnet %}        ".github/workflows/dotnet.yml",
 {% endif %}{% if use_apm %}        ".github/workflows/apm-audit.yml",
         ".github/workflows/apm-drift.yml",
 {% endif %}    ],
-    "gitlab": [".gitlab-ci.yml"],
 }
 
 LANG_DIRECTORIES = {
-    {% if 'python' in languages %}{% if python_scaffolding == 'application' %}"python": ["src", "tests"],{% endif %}{% endif %}
+    {% if has_python %}{% if python_scaffolding == 'application' %}"python": ["src", "tests"],{% endif %}{% endif %}
     "typescript": ["src", "tests"],
     "javascript": ["src", "tests"],
-    {% if 'go' in languages %}{% if go_scaffolding == 'application' %}"go": ["cmd", "internal"],{% endif %}{% endif %}
+    {% if has_go %}{% if go_scaffolding == 'application' %}"go": ["cmd", "internal"],{% endif %}{% endif %}
     "rust": ["src", "tests"],
     "dotnet": ["src", "tests"],
 }
@@ -82,7 +86,7 @@ def audit(repo_root="."):
     if not os.path.exists(os.path.join(repo_root, ".pre-commit-config.yaml")):
         issues.append("Missing: .pre-commit-config.yaml")
     {% endif %}
-    {% if use_commitlint %}
+    {% if use_commitizen %}
     if not os.path.exists(os.path.join(repo_root, "commitlint.config.mjs")):
         issues.append("Missing: commitlint.config.mjs")
     {% endif %}
@@ -118,7 +122,7 @@ def audit(repo_root="."):
         + len(REQUIRED_DIRS)
         + sum(len(LANG_DIRECTORIES.get(l, [])) for l in EXPECTED_LANGUAGES)
         {% if use_precommit %}+ 1{% endif %}
-        {% if use_commitlint %}+ 1{% endif %}
+        {% if use_commitizen %}+ 1{% endif %}
         {% if include_shell_tooling %}+ 1{% endif %}
         {% if include_code_of_conduct %}+ 1{% endif %}
         {% if use_apm %}+ 1{% endif %}

@@ -1,0 +1,28 @@
+## Fork Workflow
+
+This project is a fork of `{{ fork_upstream }}`.
+
+### Remote structure
+
+- `upstream` — `{{ fork_upstream }}` (source of truth)
+- `origin` — your fork (set by you: `git remote add origin <your-fork-url>`)
+
+### Syncing with upstream
+
+```bash
+git fetch upstream
+git merge upstream/{{ fork_upstream_branch }}
+```
+
+### Keeping template files up to date
+
+```bash
+copier update
+```
+
+### Contributing back
+
+1. Sync with upstream
+2. Create a feature branch: `git checkout -b feat/my-change`
+3. Commit and push to your fork: `git push origin feat/my-change`
+4. Open a Pull Request from your fork to upstream

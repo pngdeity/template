@@ -1,6 +1,7 @@
 ```bash
 tofu init && tofu plan && tofu apply
 ```
+brew install tflint terraform-docs   # or: go install github.com/terraform-linters/tflint@latest
 
 {% if tofu_context == 'app' %}
 When deploying app-level infrastructure, ensure the org infra remote state is accessible:

@@ -6,19 +6,30 @@ _skip_if_exists:
   - CHANGELOG.md
   - SECURITY.md
   - CONTRIBUTING.md
+  - TASKS.md
   - .env
   - "**/.gitkeep"
 _exclude:
   - "**/__pycache__"
   - .git
   - _partials
-  - "{% if _copier_operation == 'update' %}CHANGELOG.md{% endif %}"
 _tasks:
   - ["git", "init"]
+  - command: |
+      if git remote get-url origin >/dev/null 2>&1 && [ "$(git remote get-url origin)" = "{{ fork_upstream }}" ]; then
+        git remote rename origin upstream
+      else
+        git remote add upstream "{{ fork_upstream }}" 2>/dev/null || true
+      fi
+    when: "{{ fork_upstream and _copier_operation == 'copy' }}"
+  - command: ["git", "fetch", "upstream"]
+    when: "{{ fork_upstream and _copier_operation == 'copy' }}"
+  - command: ["git", "branch", "--set-upstream-to=upstream/{{ fork_upstream_branch }}", "main"]
+    when: "{{ fork_upstream and _copier_operation == 'copy' }}"
   - command: "pre-commit install"
     when: "{{ use_precommit and _copier_operation == 'copy' }}"
   - command: "pre-commit install --hook-type commit-msg"
-    when: "{{ use_commitlint and use_precommit and _copier_operation == 'copy' }}"
+    when: "{{ use_commitizen and use_precommit and _copier_operation == 'copy' }}"
   - command: >-
       command -v apm >/dev/null 2>&1 && apm install || echo "  → apm not found — run: apm install"
     when: "{{ use_apm and _copier_operation == 'copy' }}"
@@ -51,6 +62,9 @@ _message_after_copy: |
     Enable "Require signed commits" in branch protection rulesets.
     Enable Dependabot alerts and security updates.
   {% endif %}
+  {% if fork_upstream %}  Remote `upstream` set to {{ fork_upstream }}.
+    Create your fork on your forge, then: git remote add origin <your-fork-url>
+  {% endif %}
 _message_after_update: |
   {{ repo_name }} updated from {{ _version_from }} to {{ _version_to }}.
   Review changes with: git diff
@@ -73,6 +87,10 @@ author_email:
   help: Author or organization email
   default: ""
   validator: "{% if author_email and not (author_email | regex_search('.+@.+\\..+')) %}Must be a valid email or left empty{% endif %}"
+github_username:
+  type: str
+  help: GitHub username or org slug (URL-safe, used in repo URLs)
+  default: "{{ author_name | lower | replace(' ', '-') }}"
 license_type:
   type: str
   help: License
@@ -144,7 +162,7 @@ go_scaffolding:
 go_module_path:
   type: str
   help: Go module path
-  default: "{{ 'github.com/' + (author_name | default('user') | lower) + '/' + repo_name }}"
+  default: "{{ 'github.com/' + (github_username | default('user') | lower) + '/' + repo_name }}"
   when: "{{ has_go }}"
 dotnet_namespace:
   type: str
@@ -175,7 +193,6 @@ ci_provider:
   choices: |
     {% if languages | length > 0 %}
     - github
-    - gitlab
     {% else %}
     - none
     {% endif %}
@@ -184,14 +201,14 @@ use_precommit:
   type: bool
   help: Enable pre-commit hooks?
   default: true
-use_commitlint:
+use_commitizen:
   type: bool
-  help: Enforce Conventional Commits via commitlint?
+  help: Enforce Conventional Commits via commitizen?
   default: "{{ languages | length > 0 }}"
 include_code_of_conduct:
   type: bool
   help: Include a Code of Conduct?
-  default: false
+  default: true
 include_shell_tooling:
   type: bool
   help: Include shell tooling configs?
@@ -204,6 +221,31 @@ apm_packages:
   type: yaml
   default: []
   when: false
+# ── fork workflow ──
+fork_upstream:
+  type: str
+  help: Upstream repo URL for fork workflow (sets git `upstream` remote)
+  placeholder: https://github.com/original-owner/repo.git
+  default: ""
+fork_upstream_branch:
+  type: str
+  help: Upstream default branch name
+  default: main
+  when: "{{ fork_upstream }}"
+codeowners_maintainers:
+  type: str
+  help: CODEOWNERS default team (e.g. @myorg/maintainers)
+  default: ""
+codeowners_frontend:
+  type: str
+  help: CODEOWNERS frontend team
+  default: ""
+  when: "{{ has_node }}"
+codeowners_devops:
+  type: str
+  help: CODEOWNERS DevOps/infra team
+  default: ""
+  when: "{{ has_tofu or ci_provider == 'github' }}"
 # ── remaining computed values ──
 project_slug:
   type: str
@@ -216,4 +258,40 @@ copyright_year:
 go_directive:
   type: str
   default: "1.26"
+  when: false
+go_prior1:
+  type: str
+  default: "{{ '1.' ~ (go_directive.split('.')[1] | int - 1) | string }}"
+  when: false
+go_prior2:
+  type: str
+  default: "{{ '1.' ~ (go_directive.split('.')[1] | int - 2) | string }}"
+  when: false
+python_version:
+  type: str
+  default: "3.12"
+  when: false
+rust_version:
+  type: str
+  default: "1.96"
+  when: false
+dotnet_sdk_version:
+  type: str
+  default: "10.0.200"
+  when: false
+dotnet_tfm:
+  type: str
+  default: "net10.0"
+  when: false
+node_version:
+  type: str
+  default: "24"
+  when: false
+tofu_version:
+  type: str
+  default: "1.12.0"
+  when: false
+tflint_version:
+  type: str
+  default: "0.9.1"
   when: false
