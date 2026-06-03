@@ -1,0 +1,30 @@
+{
+  "language_markers": {
+    "python": [
+      "pyproject.toml",
+      "setup.py",
+      "setup.cfg",
+      "requirements.txt",
+      "Pipfile"
+    ],
+    "typescript": ["deno.json"],
+    "javascript": ["package.json"],
+    "go": ["go.mod", "go.sum"],
+    "rust": ["Cargo.toml", "Cargo.lock"],
+    "dotnet": ["*.csproj", "*.sln", "global.json"],
+    "tofu": ["*.tf"]
+  },
+  "ci_markers": {
+    "github": [".github/workflows"]
+  },
+  "tool_markers": {
+    "use_precommit": [".pre-commit-config.yaml"],
+    "include_shell_tooling": ["*.sh", ".shellcheckrc"],
+    "include_contributing": ["CONTRIBUTING.md"],
+    "include_security": ["SECURITY.md"],
+    "use_codeowners": ["CODEOWNERS"],
+    "include_code_of_conduct": ["CODE_OF_CONDUCT.md"],
+    "include_todo_check": [".github/workflows/todo-check.yml"],
+    "use_apm": ["apm.yml"]
+  }
+}

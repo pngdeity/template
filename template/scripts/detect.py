@@ -3,39 +3,26 @@
 import json
 import os
 import argparse
-import sys
+import glob as _glob
 
 
-LANGUAGE_MARKERS = {
-    "python": ["pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", "Pipfile"],
-    "typescript": ["tsconfig.json"],
-    "javascript": ["package.json"],
-    "go": ["go.mod", "go.sum"],
-    "rust": ["Cargo.toml", "Cargo.lock"],
-    "dotnet": ["*.csproj", "*.sln", "global.json"],
-    "tofu": ["*.tf"],
-}
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CI_MARKERS = {
-    "github": [".github/workflows"],
-}
 
-TOOL_MARKERS = {
-    "use_precommit": [".pre-commit-config.yaml"],
-    "use_commitizen": [".cz.toml", "pyproject.toml"],
-    "include_shell_tooling": ["*.sh"],
-}
+def _load_registry():
+    with open(os.path.join(_SCRIPT_DIR, "_registry.json")) as f:
+        return json.load(f)
 
 
 def _glob_match(repo_path, pattern):
-    import glob as _glob
     return bool(_glob.glob(os.path.join(repo_path, pattern), recursive=False))
 
 
 def detect(repo_path):
+    registry = _load_registry()
     results = {"languages": [], "ci_provider": "none"}
 
-    for lang, markers in LANGUAGE_MARKERS.items():
+    for lang, markers in registry["language_markers"].items():
         for marker in markers:
             if marker.startswith("*"):
                 if _glob_match(repo_path, marker):
@@ -45,11 +32,10 @@ def detect(repo_path):
                 results["languages"].append(lang)
                 break
 
-    # Deduplicate: typescript implies javascript
     if "typescript" in results["languages"] and "javascript" not in results["languages"]:
         results["languages"].append("javascript")
 
-    for provider, markers in CI_MARKERS.items():
+    for provider, markers in registry["ci_markers"].items():
         for marker in markers:
             if marker.startswith("*"):
                 if _glob_match(repo_path, marker):
@@ -59,7 +45,7 @@ def detect(repo_path):
                 results["ci_provider"] = provider
                 break
 
-    for tool, markers in TOOL_MARKERS.items():
+    for tool, markers in registry["tool_markers"].items():
         results[tool] = any(
             _glob_match(repo_path, m) if m.startswith("*")
             else os.path.exists(os.path.join(repo_path, m))

@@ -15,6 +15,7 @@
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+- [Prerequisites](#prerequisites)
 - [Development](#development)
 - [Task Tracking](#task-tracking)
 - [Inline Annotations](#inline-annotations)
@@ -28,6 +29,8 @@
 git clone {{ repo_name }}.git
 cd {{ repo_name }}
 ```
+
+{% include 'template/_partials/prerequisites.jinja' %}
 
 {% if has_python %}
 {% include 'template/_partials/setup-python.jinja' %}

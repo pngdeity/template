@@ -6,6 +6,7 @@ _skip_if_exists:
   - CHANGELOG.md
   - SECURITY.md
   - CONTRIBUTING.md
+  - CODEOWNERS # active only when use_codeowners: true
   - TASKS.md
   - .env
   - "**/.gitkeep"
@@ -208,10 +209,26 @@ use_commitizen:
 include_code_of_conduct:
   type: bool
   help: Include a Code of Conduct?
-  default: true
+  default: false
+include_todo_check:
+  type: bool
+  help: Include CI check that blocks FIXME/HACK/BUG annotations?
+  default: false
 include_shell_tooling:
   type: bool
-  help: Include shell tooling configs?
+  help: Include shell tooling (.shellcheckrc)?
+  default: false
+include_contributing:
+  type: bool
+  help: Include CONTRIBUTING.md?
+  default: false
+include_security:
+  type: bool
+  help: Include SECURITY.md?
+  default: false
+use_codeowners:
+  type: bool
+  help: Use CODEOWNERS for automated PR review assignment?
   default: false
 use_apm:
   type: bool
@@ -236,16 +253,17 @@ codeowners_maintainers:
   type: str
   help: CODEOWNERS default team (e.g. @myorg/maintainers)
   default: ""
+  when: "{{ use_codeowners }}"
 codeowners_frontend:
   type: str
   help: CODEOWNERS frontend team
   default: ""
-  when: "{{ has_node }}"
+  when: "{{ use_codeowners and has_node }}"
 codeowners_devops:
   type: str
   help: CODEOWNERS DevOps/infra team
   default: ""
-  when: "{{ has_tofu or ci_provider == 'github' }}"
+  when: "{{ use_codeowners and (has_tofu or ci_provider == 'github') }}"
 # ── remaining computed values ──
 project_slug:
   type: str

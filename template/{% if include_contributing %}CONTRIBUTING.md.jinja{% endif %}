@@ -13,6 +13,8 @@
 
 ## Development Setup
 
+{% include 'template/_partials/prerequisites.jinja' %}
+
 {% if has_python %}{% include 'template/_partials/setup-python.jinja' %}{% endif %}
 {% if has_node %}{% include 'template/_partials/setup-node.jinja' %}{% endif %}
 {% if has_go %}{% include 'template/_partials/setup-go.jinja' %}{% endif %}
@@ -38,7 +40,7 @@
 
 ## Code Review
 
-All submissions require review. CODEOWNERS are automatically assigned as reviewers.
+All submissions require review.{% if use_codeowners %} CODEOWNERS are automatically assigned as reviewers.{% endif %}
 
 {% if use_apm %}{% include 'template/_partials/setup-apm.jinja' %}{% endif %}
 

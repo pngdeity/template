@@ -1,0 +1,56 @@
+## Prerequisites
+
+{% if has_python %}
+### Python — [PyPI](https://pypi.org/)
+
+- Python {{ python_version }}: `pacman -S python`
+- uv: `pacman -S uv`
+- ruff: `pacman -S ruff`
+{% if python_scaffolding == 'application' %}- mypy: `pacman -S mypy`
+{% endif %}
+{% endif %}
+{% if has_node %}
+### Node.js — [npm](https://www.npmjs.com/)
+
+- Node.js {{ node_version }}: `pacman -S nodejs`
+- {{ node_package_manager }}: `pacman -S {{ node_package_manager }}`
+- Deno: `pacman -S deno`
+
+{% endif %}
+{% if has_go %}
+### Go — [pkg.go.dev](https://pkg.go.dev/)
+
+- Go {{ go_directive }}: `pacman -S go`
+- golangci-lint: `pacman -S golangci-lint`
+- gosec: `go install github.com/securego/gosec/v2/cmd/gosec@v2`
+- govulncheck: `go tool govulncheck` (built into Go 1.24+)
+
+{% endif %}
+{% if has_rust %}
+### Rust — [crates.io](https://crates.io/)
+
+- Rust {{ rust_version }}: `pacman -S rustup` then `rustup toolchain install {{ rust_version }}`
+
+{% endif %}
+{% if has_dotnet %}
+### .NET — [NuGet](https://www.nuget.org/)
+
+- .NET SDK {{ dotnet_sdk_version }}: `pacman -S dotnet-sdk`
+
+{% endif %}
+{% if has_tofu %}
+### OpenTofu — [OpenTofu Registry](https://search.opentofu.org/)
+
+- OpenTofu {{ tofu_version }}: `pacman -S opentofu`
+- tflint: `pacman -S tflint`
+- terraform-docs: `yay -S terraform-docs`
+
+{% endif %}
+### Universal tools
+
+{% if use_precommit %}- pre-commit: `pacman -S pre-commit`
+- gitleaks: `pacman -S gitleaks`
+{% if use_commitizen %}- commitizen: `yay -S python-commitizen`
+{% endif %}{% endif %}{% if include_shell_tooling %}- shellcheck: `pacman -S shellcheck`
+{% endif %}- yamlfmt: `pacman -S yamlfmt`
+- rumdl: `pacman -S rumdl`

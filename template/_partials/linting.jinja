@@ -13,7 +13,6 @@ deno fmt --check && deno lint
 ```bash
 golangci-lint run && gosec ./... && govulncheck ./...
 ```
-go install github.com/securego/gosec/v2/cmd/gosec@latest && go install golang.org/x/vuln/cmd/govulncheck@latest
 {% endif %}
 {% if has_rust %}
 ```bash

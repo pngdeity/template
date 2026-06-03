@@ -33,4 +33,4 @@ We follow a coordinated disclosure process:
 
 - Never commit secrets, API keys, or credentials
 - Use environment variables for sensitive configuration
-- Keep dependencies updated — Dependabot alerts are reviewed weekly
+{% if ci_provider == 'github' %}- Keep dependencies updated — Dependabot alerts are reviewed weekly{% endif %}

@@ -13,10 +13,10 @@ REQUIRED_ROOT_FILES = [
     ".editorconfig",
     "README.md",
     "LICENSE",
-    "CONTRIBUTING.md",
-    "SECURITY.md",
+    {% if include_contributing %}"CONTRIBUTING.md",{% endif %}
+    {% if include_security %}"SECURITY.md",{% endif %}
     "CHANGELOG.md",
-    "CODEOWNERS",
+    {% if use_codeowners %}"CODEOWNERS",{% endif %}
     "TASKS.md",
 ]
 
@@ -42,8 +42,8 @@ LANG_SPECIFIC_FILES = {
 CI_SPECIFIC_FILES = {
     "github": [
         ".github/workflows/verify-signed-commits.yml",
-        ".github/workflows/todo-check.yml",
-        ".github/workflows/secret-scan.yml",
+        {% if include_todo_check %}".github/workflows/todo-check.yml",
+        {% endif %}".github/workflows/secret-scan.yml",
 {% if has_go %}        ".github/workflows/go.yml",
 {% endif %}{% if has_python %}        ".github/workflows/python.yml",
 {% endif %}{% if has_node %}        ".github/workflows/node.yml",
@@ -86,10 +86,6 @@ def audit(repo_root="."):
     if not os.path.exists(os.path.join(repo_root, ".pre-commit-config.yaml")):
         issues.append("Missing: .pre-commit-config.yaml")
     {% endif %}
-    {% if use_commitizen %}
-    if not os.path.exists(os.path.join(repo_root, "commitlint.config.mjs")):
-        issues.append("Missing: commitlint.config.mjs")
-    {% endif %}
     {% if include_shell_tooling %}
     if not os.path.exists(os.path.join(repo_root, ".shellcheckrc")):
         issues.append("Missing: .shellcheckrc")
@@ -122,7 +118,6 @@ def audit(repo_root="."):
         + len(REQUIRED_DIRS)
         + sum(len(LANG_DIRECTORIES.get(l, [])) for l in EXPECTED_LANGUAGES)
         {% if use_precommit %}+ 1{% endif %}
-        {% if use_commitizen %}+ 1{% endif %}
         {% if include_shell_tooling %}+ 1{% endif %}
         {% if include_code_of_conduct %}+ 1{% endif %}
         {% if use_apm %}+ 1{% endif %}
