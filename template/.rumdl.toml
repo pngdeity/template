@@ -8,38 +8,53 @@
 
 [global]
 disable = [
-    "MD001",   # heading-increment
-    "MD007",   # ul-indent
-    "MD013",   # line-length
-    "MD014",   # commands-show-output
-    "MD022",   # blanks-around-headings
-    "MD026",   # trailing-punctuation
-    "MD028",   # blank-line-blockquote
-    "MD029",   # ol-prefix
-    "MD031",   # blanks-around-fences
-    "MD032",   # blanks-around-lists
-    "MD034",   # bare-urls
-    "MD036",   # no-emphasis-as-heading
-    "MD040",   # fenced-code-language
-    "MD041",   # first-line-h1
-    "MD056",   # table-column-count
-    "MD058",   # blanks-around-tables
-    "MD060",   # table-column-style
+  "MD001", # heading-increment
+  "MD007", # ul-indent
+  "MD013", # line-length
+  "MD014", # commands-show-output
+  "MD022", # blanks-around-headings
+  "MD026", # trailing-punctuation
+  "MD028", # blank-line-blockquote
+  "MD029", # ol-prefix
+  "MD031", # blanks-around-fences
+  "MD032", # blanks-around-lists
+  "MD034", # bare-urls
+  "MD036", # no-emphasis-as-heading
+  "MD040", # fenced-code-language
+  "MD041", # first-line-h1
+  "MD056", # table-column-count
+  "MD058", # blanks-around-tables
 ]
+cache = false
 flavor = "standard"
+extend-enable = [
+  "MD060", # table-column-style
+  "MD063", # heading-capitalization
+  "MD070", # nested-code-fence
+  "MD073", # toc-validation
+]
 
 [MD024]
 siblings-only = true
 
 [MD033]
 allowed-elements = [
-    "br",
-    "char",
-    "details",
-    "summary",
-    "img",
-    "a",
-    "sub",
-    "sup",
-    "T",
+  "br",
+  "char",
+  "details",
+  "summary",
+  "img",
+  "a",
+  "sub",
+  "sup",
+  "T",
 ]
+
+[MD060]
+style = "aligned"
+
+[MD063]
+style = "sentence-case"
+
+[MD073]
+enabled = true
