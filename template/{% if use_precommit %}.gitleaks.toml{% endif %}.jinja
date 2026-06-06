@@ -1,0 +1,14 @@
+title = "{{ repo_name }} secret detection"
+
+[extend]
+useDefault = true
+{% if gitleaks_allowlist %}
+
+[[allowlists]]
+description = "{{ gitleaks_allowlist_description }}"
+paths = [
+{% for path in gitleaks_allowlist %}
+  "{{ path }}",
+{% endfor %}
+]
+{% endif %}

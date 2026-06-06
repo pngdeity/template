@@ -234,6 +234,14 @@ use_apm:
   type: bool
   help: Scaffold apm.yml for agent dependency management?
   default: false
+gitleaks_allowlist:
+  type: yaml
+  default: []
+  when: false
+gitleaks_allowlist_description:
+  type: str
+  default: "project-specific exclusions"
+  when: false
 apm_packages:
   type: yaml
   default: []
