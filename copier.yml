@@ -234,6 +234,10 @@ use_apm:
   type: bool
   help: Scaffold apm.yml for agent dependency management?
   default: false
+use_devcontainer:
+  type: bool
+  help: Scaffold .devcontainer with language-specific features?
+  default: true
 gitleaks_allowlist:
   type: yaml
   default: []

@@ -1,0 +1,31 @@
+{%- set vsix = [] -%}
+{%- if has_go %}{% set _ = vsix.append('"golang.go"') %}{% endif -%}
+{%- if has_python %}{% set _ = vsix.append('"ms-python.python"') %}{% endif -%}
+{%- if has_node %}{% set _ = vsix.append('"denoland.vscode-deno"') %}{% endif -%}
+{%- if has_rust %}{% set _ = vsix.append('"rust-lang.rust-analyzer"') %}{% endif -%}
+{%- if has_dotnet %}{% set _ = vsix.append('"ms-dotnettools.csharp"') %}{% endif -%}
+{%- if has_tofu %}{% set _ = vsix.append('"hashicorp.terraform"') %}{% endif -%}
+{%- set features = [] -%}
+{%- if has_go %}{% set _ = features.append('"ghcr.io/devcontainers/features/go:1": {}') %}{% endif -%}
+{%- if has_python %}{% set _ = features.append('"ghcr.io/devcontainers/features/python:1": {}') %}{% endif -%}
+{%- if has_node %}{% set _ = features.append('"ghcr.io/devcontainers/features/node:1": {}') %}{% endif -%}
+{%- if has_rust %}{% set _ = features.append('"ghcr.io/devcontainers/features/rust:1": {}') %}{% endif -%}
+{%- if has_dotnet %}{% set _ = features.append('"ghcr.io/devcontainers/features/dotnet:1": {}') %}{% endif -%}
+{%- if has_tofu %}{% set _ = features.append('"ghcr.io/devcontainers/features/terraform:1": {}') %}{% endif -%}
+{
+  "name": "{{ repo_name }}",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}{% if features %},{% endif -%}
+{% for entry in features %}
+    {{ entry }}{% if not loop.last %},{% endif %}
+{%- endfor %}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [{% for ext in vsix %}
+        {{ ext }}{% if not loop.last %},{% endif %}{% endfor %}
+      ]
+    }
+  }
+}

@@ -1,12 +1,20 @@
 # yaml-language-server: $schema=https://json.schemastore.org/golangci-lint.json
 linters:
   enable:
+    - bodyclose
     - errcheck
+    - forcetypeassert
     - gosimple
     - govet
     - ineffassign
+    - nilerr
+    - prealloc
+    - rowserrcheck
+    - sqlclosecheck
     - staticcheck
     - unused
+    - wastedassign
+    - wrapcheck
     - gofmt
     - goimports
     - misspell
@@ -25,7 +33,9 @@ linters-settings:
     check-blank: true
   revive:
     rules:
+      - name: atomic
       - name: blank-imports
+      - name: bool-literal-in-expr
       - name: context-as-argument
       - name: context-keys-type
       - name: error-return
@@ -40,6 +50,9 @@ linters-settings:
       - name: unexported-return
       - name: unnecessary-stmt
       - name: unreachable-code
+      - name: unused-parameter
+      - name: unused-receiver
+      - name: use-any
 
 run:
   timeout: 5m
