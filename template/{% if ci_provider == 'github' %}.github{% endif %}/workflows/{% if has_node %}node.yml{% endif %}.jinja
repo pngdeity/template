@@ -21,6 +21,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          {% raw %}node-version: {{ node_version }}{% endraw %}
+          node-version: {{ node_version }}
       - run: {{ node_package_manager }} install
-      - run: {% raw %}npm test{% endraw %}
+      - run: npm test

@@ -8,6 +8,7 @@ sections:
   show: []
 
 content: |-
+{#- -#}{% raw %}
   {{ .Header }}
 
   ## Usage
@@ -34,13 +35,16 @@ content: |-
   {{ .Outputs }}
 
   {{ .Footer }}
+{% endraw %}
 
 output:
   file: README.md
   mode: inject
   template: |-
     <!-- BEGIN_TF_DOCS -->
+{#- -#}{% raw %}
     {{ .Content }}
+{% endraw %}
     <!-- END_TF_DOCS -->
 
 sort:

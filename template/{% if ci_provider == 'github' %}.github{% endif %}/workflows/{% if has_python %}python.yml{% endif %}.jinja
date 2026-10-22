@@ -29,6 +29,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
         with:
-          {% raw %}python-version: ${{ matrix.python-version }}{% endraw %}
+          python-version: ${{ '{{' }} matrix.python-version {{ '}}' }}
       - run: uv sync
       - run: uv run pytest
