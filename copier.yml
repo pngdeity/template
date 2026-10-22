@@ -210,7 +210,11 @@ include_code_of_conduct:
   type: bool
   help: Include a Code of Conduct?
   default: false
-include_todo_check:
+include_tasks_lint:
+  type: bool
+  help: Include CI check that lints TASKS.md?
+  default: true
+include_annotation_gate:
   type: bool
   help: Include CI check that blocks FIXME/HACK/BUG annotations?
   default: false

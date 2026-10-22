@@ -1,0 +1,22 @@
+name: Tasks Lint
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  tasks-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Lint TASKS.md
+        if: hashFiles('TASKS.md') != ''
+        run: npx @tasks-md/lint TASKS.md
+      - name: Report missing TASKS.md
+        if: hashFiles('TASKS.md') == ''
+        run: |
+          echo "No TASKS.md at the repository root, but this workflow was"
+          echo "installed by include_tasks_lint. Restore TASKS.md, or remove"
+          echo ".github/workflows/tasks-lint.yml and this check."
+          exit 1

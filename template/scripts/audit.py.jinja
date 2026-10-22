@@ -42,7 +42,8 @@ LANG_SPECIFIC_FILES = {
 CI_SPECIFIC_FILES = {
     "github": [
         ".github/workflows/verify-signed-commits.yml",
-        {% if include_todo_check %}".github/workflows/todo-check.yml",
+        {% if include_tasks_lint %}".github/workflows/tasks-lint.yml",
+        {% endif %}{% if include_annotation_gate %}".github/workflows/annotation-gate.yml",
         {% endif %}".github/workflows/secret-scan.yml",
 {% if has_go %}        ".github/workflows/go.yml",
 {% endif %}{% if has_python %}        ".github/workflows/python.yml",

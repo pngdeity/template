@@ -1,12 +1,6 @@
 {
   "language_markers": {
-    "python": [
-      "pyproject.toml",
-      "setup.py",
-      "setup.cfg",
-      "requirements.txt",
-      "Pipfile"
-    ],
+    "python": ["pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", "Pipfile"],
     "typescript": ["deno.json"],
     "javascript": ["package.json"],
     "go": ["go.mod", "go.sum"],
@@ -24,7 +18,8 @@
     "include_security": ["SECURITY.md"],
     "use_codeowners": ["CODEOWNERS"],
     "include_code_of_conduct": ["CODE_OF_CONDUCT.md"],
-    "include_todo_check": [".github/workflows/todo-check.yml"],
+    "include_tasks_lint": [".github/workflows/tasks-lint.yml"],
+    "include_annotation_gate": [".github/workflows/annotation-gate.yml"],
     "use_apm": ["apm.yml"]
   }
 }

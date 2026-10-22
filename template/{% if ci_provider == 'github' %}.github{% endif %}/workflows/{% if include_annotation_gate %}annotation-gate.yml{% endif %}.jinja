@@ -1,0 +1,57 @@
+name: Annotation Gate
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  forbidden-inline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Three-dot diff is deliberate: it compares against the merge base, so
+      # commits that landed on main since this branch forked are not attributed
+      # to this PR. Do not "fix" this to a two-dot diff.
+      # Source extensions only: this list is the scan scope. Documentation
+      # legitimately names these tags (this repository's own AGENTS.md does),
+      # so prose is never scanned and a docs-only PR cannot fail here.
+      - run: |
+          paths=(
+          {%- if has_python %}
+            '*.py'
+          {%- endif %}
+          {%- if has_node %}
+            '*.ts' '*.tsx'
+          {%- endif %}
+          {%- if has_go %}
+            '*.go'
+          {%- endif %}
+          {%- if has_rust %}
+            '*.rs'
+          {%- endif %}
+          {%- if has_dotnet %}
+            '*.cs'
+          {%- endif %}
+          {%- if has_tofu %}
+            '*.tf'
+          {%- endif %}
+          {%- if include_shell_tooling %}
+            '*.sh'
+          {%- endif %}
+          )
+          if [ -z "${paths[*]:-}" ]; then
+            echo "No source extensions selected for this repository; nothing to scan."
+            exit 0
+          fi
+          added=$(git diff origin/main...HEAD -- "${paths[@]}" | grep -E '^\+.*\b(FIXME|HACK|BUG)\b' || true)
+          # An annotated BUG is an explicit exemption in any comment form. The
+          # leading boundary stops `a--BUG:b` from being read as a comment, and
+          # the inner `*` allows `/** BUG: */`.
+          bad=$(printf '%s\n' "$added" | grep -vE '(^|[^A-Za-z0-9])(//|#|--|\*)[[:space:]*]*BUG:' || true)
+          if [ -n "$bad" ]; then
+            echo "Forbidden inline tags added in this PR:"
+            echo "$bad"
+            echo
+            echo "Resolve them, or turn them into a TASKS.md entry before merging."
+            exit 1
+          fi
