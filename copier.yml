@@ -3,6 +3,7 @@ _templates_suffix: .jinja
 _subdirectory: template
 _skip_if_exists:
   - README.md
+  - AGENTS.md
   - CHANGELOG.md
   - SECURITY.md
   - CONTRIBUTING.md

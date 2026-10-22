@@ -1,5 +1,24 @@
 # Tasks
 
+<!-- Agent contract
+     Read this file before asking what to work on.
+     Claim a task by appending (@agent-id) to its line, before starting.
+     Remove a task only when its Verification command succeeds. Your belief that
+     it works is not evidence.
+     Add work you discover under the tier it belongs to, with an ID and a
+     Verification command. Default to P2 when unsure.
+     Do not reprioritize someone else's task. Record the concern in its Details
+     and leave the priority alone.
+-->
+
+<!-- A task is a checkbox plus nested metadata fields, as in the P1 example.
+     Completed tasks are removed, never checked off: put `closes <id>` in the
+     commit and git log becomes the archive.
+     Priority: P0 broken or users blocked. P1 planned work. P2 valuable, not
+     blocking. P3 someday, kept for reference.
+     Full field reference: README, Task Tracking section.
+-->
+
 <!-- policy: Run tests before every commit. Never skip CI checks.
      policy: Prefer fixing root causes over symptoms. -->
 
@@ -7,6 +26,22 @@
 
 ## P1
 
+- [ ] Example task — delete this block when you add real work
+  - **ID**: example-task
+  - **Tags**: backend
+  - **Details**: Replace with the change and why it is needed.
+  - **Acceptance**: The new behavior is covered by a test.
+  - **Verification**: `{% if has_python %}uv run pytest{% elif has_go %}go test ./...{% elif has_rust %}cargo test{% elif has_dotnet %}dotnet test{% elif has_node %}npm test{% else %}echo replace-me{% endif %}`
+  - **Files**: `src/`, `tests/`
+  - **Touches**: `src/`
+
 ## P2
 
 ## P3
+
+- [ ] Example of an externally blocked task — delete this block
+  - **ID**: example-blocked
+  - **Details**: Use Blocked for constraints outside the queue, such as an
+    approval or a credential. Use Blocked by for another task's ID.
+  - **Blocked**: needs-user-approval — posting publicly as the user requires
+    explicit confirmation.

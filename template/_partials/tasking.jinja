@@ -12,21 +12,39 @@ Tasks live under four priority headings:
 
 Each task is a Markdown checkbox:
 ```markdown
-- [ ] Short imperative description
+- [ ] Short imperative description (@claimant)
   - **ID**: auth-fix
   - **Tags**: backend, auth
   - **Details**: Implementation guidance and context
-  - **Files**: `src/auth/refresh.ts`
   - **Acceptance**: Definition of done
+  - **Verification**: The runnable command that demonstrates it
+  - **Files**: `src/auth/refresh.ts`
+  - **Touches**: `src/auth/refresh.ts`, `tests/auth/`
   - **Blocked by**: other-task-id
+  - **Blocked**: needs-user-approval — reason the queue cannot clear
 ```
+
+`**Acceptance**` is the criterion for done. `**Verification**` is the procedure
+that demonstrates it — a command whose exit status decides the question, not a
+restatement of the criterion. A task whose Verification cannot be run is not
+ready; finish specifying it before starting.
+
+`**Files**` lists everything relevant, including read-only references.
+`**Touches**` is the subset the task writes. Two tasks with disjoint `Touches`
+sets can run in parallel; overlapping sets conflict and must be sequential.
+
+`**Blocked by**` references other task IDs. `**Blocked**` records a constraint
+outside the queue — an approval, a credential, a policy refusal — so a blocked
+task is skipped visibly instead of silently.
 
 ## Rules
 
-- **Completed tasks are removed**, never checked off. Git log is your history.
+- **Completed tasks are removed**, never checked off. Put `closes <task-id>` in
+  the commit message so `git log --grep='^closes '` still reports completion.
 - **Sub-tasks** use nested `- [x]` checkboxes to track progress. Parent owns all sub-tasks.
 - **Promote to separate tasks** when steps can be parallelized or span multiple sessions. Use `**Blocked by**:` for dependencies.
-- **Claim tasks** by appending `(@your-name)` before starting work.
+- **Claim tasks** by appending `(@your-name)` before starting work. A claim whose
+  agent is gone is stale, not free: ask before taking it.
 - **Add new tasks** you discover during implementation — use P2 if unsure of priority.
 
 ## Validation

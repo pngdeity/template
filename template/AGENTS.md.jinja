@@ -1,0 +1,66 @@
+# AGENTS.md
+
+<!-- Keep this file short. It is a table of contents, not a manual: instructions
+     that are not in context while an agent is working do not exist, and a second
+     full copy of the README rots into rules nobody can verify. Long-form
+     decisions belong in docs/ or the README, referenced from here. -->
+
+## This repository
+
+{# Trimmed block so the description line keeps its newline under trim_blocks #}
+This repository is `{{ repo_name }}`.{% if repo_description %} {{ repo_description }}{% endif %}
+{# Keep the blank line below identical on both branches (trim_blocks eats one) #}
+
+## Commands
+
+Run these before claiming work is done.
+
+{% if has_python or has_node or has_go or has_rust or has_dotnet %}
+Testing:
+
+{% include 'template/_partials/testing.jinja' %}
+
+Linting:
+
+{% include 'template/_partials/linting.jinja' %}
+
+{% endif %}
+## Task tracking
+
+`TASKS.md` is the work queue. Read it before asking what to do.
+
+- Claim a task by appending `(@agent-id)` to its line.
+- Remove a task block only when its `**Verification**` command succeeds. Treat
+  your own belief that the work is complete as a claim, not evidence.
+- Put `closes <task-id>` in the completion commit; git log is the archive.
+- Add work you discover at the end of the priority tier it belongs to, with an
+  ID and a Verification command. Default to P2 when unsure of the tier.
+- Do not reprioritize or restructure someone else's task. Record the concern in
+  its Details and leave the priority alone.
+
+The field-by-field format is defined in the README's Task Tracking section.
+
+## Inline annotations
+
+`TODO` is planned work and is allowed.
+{% if include_annotation_gate -%}
+`FIXME`, `HACK`, and `BUG` are blocked by CI: resolve them or convert them into
+a task before merging.
+{% else -%}
+`FIXME`, `HACK`, and `BUG` mark debt that should be resolved or converted into a
+task; no CI check enforces this here.
+{% endif -%}
+Format is the uppercase tag, a colon, then an imperative description, with an
+issue or task reference when one exists.
+
+```text
+// TODO: implement retry logic (#42)
+// FIXME: panics on empty input
+```
+
+## Conventions
+
+- Long-form decisions and design notes go in `docs/`.
+{% if use_commitizen -%}
+- Commit messages follow Conventional Commits; see the README.
+{% endif -%}
