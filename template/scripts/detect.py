@@ -32,6 +32,26 @@ def detect(repo_path):
                 results["languages"].append(lang)
                 break
 
+    # Root markers miss repos that keep their source below the root, e.g. a
+    # Node package whose Python lives in bin/. These patterns are deliberately
+    # anchored to a named subdirectory rather than matched recursively, and a
+    # language found this way must also have a runtime present at the root:
+    # stray .ts files in a Python repo say nothing about its language.
+    runtimes = registry.get("nested_language_runtime", {})
+    for lang, markers in registry.get("nested_language_markers", {}).items():
+        if lang in results["languages"]:
+            continue
+        if not any(_glob_match(repo_path, marker) for marker in markers):
+            continue
+        if not any(
+            _glob_match(repo_path, m)
+            if m.startswith("*")
+            else os.path.exists(os.path.join(repo_path, m))
+            for m in runtimes.get(lang, [])
+        ):
+            continue
+        results["languages"].append(lang)
+
     if "typescript" in results["languages"] and "javascript" not in results["languages"]:
         results["languages"].append("javascript")
 

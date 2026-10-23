@@ -51,33 +51,6 @@
   - **Touches**: `template/{% if ci_provider == 'github' %}.github{% endif %}/`
   - **Estimate**: 2h
 
-- [ ] Teach `detect.py` the non-root surfaces the plugin repos use (@opencode)
-  - **ID**: detect-plugin-surface
-  - **Tags**: tooling
-  - **Hypothesis**: Detection maps only root-level markers, so a repo whose
-    Python lives in `bin/*.py`, whose units live in `share/systemd/user/` and
-    whose records live in `docs/records/` is detected as
-    `languages=["javascript"]` and nothing else. Feeding that to `copier adopt`
-    silently drops the Python language, its tooling and its CI.
-  - **Success**: Running `detect.py` on `opencode-codeintel` reports `python`
-    among the languages, with the reason recorded; every answer it emits is one
-    `copier.yml` accepts.
-  - **Pivot**: If nested detection produces false positives on unrelated repos,
-    restrict it to explicitly configured subdirectories and record the limit.
-  - **Measurement**: `python3 template/scripts/detect.py ../opencode-codeintel`
-  - **Anchor**: The six repos at `~/repos/pngdeity/active/opencode-*`;
-    `opencode-codeintel` tracks `bin/*.py` and `share/systemd/user/*.service`.
-  - **Details**: `_registry.json` `language_markers` are root-relative
-    filenames (`pyproject.toml`, `package.json`, `go.mod`, `*.csproj`, `*.tf`).
-    `tool_markers` likewise. `detect.py` globs the repo root only.
-  - **Acceptance**: A documented set of nested markers is recognised, the
-    emitted `--data` string feeds a successful `copier copy`, and the
-    limitation is recorded for any surface still undetectable.
-  - **Verification**: `python3 template/scripts/detect.py ../opencode-codeintel`
-  - **Files**: `template/scripts/_registry.json`, `template/scripts/detect.py`
-  - **Touches**: `template/scripts/`
-  - **Estimate**: 3h
-
 ## P1
 
 - [ ] Document `_skip_if_exists` entries in `copier.yml` with inline comments
