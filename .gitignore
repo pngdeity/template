@@ -19,3 +19,4 @@ secrets.json
 __pycache__/
 *.pyc
 *.pyo
+.serena/
