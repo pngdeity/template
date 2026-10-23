@@ -10,11 +10,20 @@
 {% endif %}
 {% endif %}
 {% if has_node %}
-### Node.js — [npm](https://www.npmjs.com/)
+### {{ 'Deno' if node_runtime == 'deno' else 'Node.js' }} — [{{ 'jsr.io' if node_runtime == 'deno' else 'npmjs.com' }}](https://{{ 'jsr.io' if node_runtime == 'deno' else 'www.npmjs.com' }}/)
 
+{% if node_runtime == 'deno' %}
+- Deno: `pacman -S deno`
+{% else %}
 - Node.js {{ node_version }}: `pacman -S nodejs`
 - {{ node_package_manager }}: `pacman -S {{ node_package_manager }}`
-- Deno: `pacman -S deno`
+{% endif %}
+{% if uses_deno and node_runtime != 'deno' %}
+- Deno (formatter and linter): `pacman -S deno`
+{% endif %}
+{% if node_lint == 'biome' %}
+- Biome: installed as a devDependency, run via `npx biome`
+{% endif %}
 
 {% endif %}
 {% if has_go %}

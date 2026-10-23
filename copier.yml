@@ -9,6 +9,7 @@ _skip_if_exists:
   - CONTRIBUTING.md
   - CODEOWNERS # active only when use_codeowners: true
   - TASKS.md
+  - package.json
   - .env
   - "**/.gitkeep"
 _exclude:
@@ -59,6 +60,24 @@ _message_after_copy: |
     {% if include_shell_tooling %}shellcheck **/*.sh{% endif %}
     Start coding{% if languages %} in {{ languages | join(', ') }}{% endif %}.
   {% if use_apm %}apm install   # if apm not auto-detected during scaffold{% endif %}
+  {% if is_node_library %}
+  Publishing:
+    Register a trusted publisher for {{ repo_name }} at
+    https://www.npmjs.com/package/{{ repo_name }}/access, then tag a release
+    (git tag v0.1.0 && git push --tags). No NPM_TOKEN is used.
+    The first publish needs: npm publish --access public
+  {% endif %}
+  {% if has_node and node_runtime == 'deno' %}
+  No package.json was created: node_runtime is deno, so deno.json is the only
+  Node-side config and `deno test` is the test runner.
+  {% endif %}
+  {% if has_node_build %}
+  Build before testing: run the build script once (see package.json scripts).
+  {% endif %}
+  {% if has_node and node_lint != 'deno' %}
+  Formatter note: node_lint is {{ node_lint }}, so deno is not the formatter of
+  record here. TOOLING.md's LSP matrix row for this language does not apply.
+  {% endif %}
   {% if ci_provider == 'github' %}
   Repository settings:
     Enable "Require signed commits" in branch protection rulesets.
@@ -70,7 +89,16 @@ _message_after_copy: |
 _message_after_update: |
   {{ repo_name }} updated from {{ _version_from }} to {{ _version_to }}.
   Review changes with: git diff
-  {% if use_precommit %}Re-run: pre-commit install{% endif %}
+  {% if use_precommit %}
+  Re-run: pre-commit install
+  {% endif %}
+  {% if has_node %}
+  package.json is in _skip_if_exists and was not modified.
+  {% if is_node_library %}
+  Merge the publish fields (exports, files, publishConfig, repository) from this
+  template by hand, or the package stays private.
+  {% endif %}
+  {% endif %}
 repo_name:
   type: str
   help: Repository name (kebab-case)
@@ -189,6 +217,39 @@ node_package_manager:
     - bun
   default: npm
   when: "{{ has_node }}"
+node_runtime:
+  type: str
+  help: Node runtime and test runner
+  choices:
+    - node
+    - deno
+  default: node
+  when: "{{ has_node }}"
+node_purpose:
+  type: str
+  help: Node package purpose
+  choices:
+    - application
+    - library
+  default: application
+  when: "{{ has_node and node_runtime != 'deno' }}"
+node_build:
+  type: str
+  help: Node build and type-check tool
+  choices:
+    - none
+    - tsc
+    - tsup
+  default: none
+  when: "{{ has_node and node_runtime != 'deno' }}"
+node_lint:
+  type: str
+  help: Node formatter and linter
+  choices:
+    - deno
+    - biome
+  default: deno
+  when: "{{ has_node }}"
 ci_provider:
   type: str
   help: CI/CD provider
@@ -254,6 +315,51 @@ gitleaks_allowlist_description:
 apm_packages:
   type: yaml
   default: []
+  when: false
+# ── Node tool assumptions ──
+# Four independent decisions. Do not collapse them: a project may install with
+# one tool, test with another, and never build at all.
+is_node_library:
+  type: bool
+  default: "{{ has_node and node_purpose == 'library' and node_runtime != 'deno' }}"
+  when: false
+has_node_build:
+  type: bool
+  default: "{{ has_node and node_build != 'none' and node_runtime != 'deno' }}"
+  when: false
+uses_deno:
+  type: bool
+  default: "{{ has_node and (node_runtime == 'deno' or node_lint == 'deno') }}"
+  when: false
+# The package manager runs the script; the runtime defines what the script
+# contains. Both feed this, so no template file hardcodes a runner.
+node_test_cmd:
+  type: str
+  default: >-
+    {%- if node_runtime == 'deno' -%}deno test {%- elif node_package_manager == 'pnpm' -%}pnpm test {%- elif node_package_manager == 'yarn' -%}yarn test {%- elif node_package_manager == 'bun' -%}bun run test {%- else -%}npm test {%- endif -%}
+  when: false
+node_install_cmd:
+  type: str
+  default: >-
+    {%- if node_package_manager == 'pnpm' -%}pnpm install --frozen-lockfile {%- elif node_package_manager == 'yarn' -%}yarn install --immutable {%- elif node_package_manager == 'bun' -%}bun install --frozen-lockfile {%- else -%}npm ci {%- endif -%}
+  when: false
+node_lint_cmd:
+  type: str
+  default: >-
+    {%- if node_lint == 'deno' -%}deno fmt --check && deno lint {%- else -%}npx biome check . {%- endif -%}
+  when: false
+# The runner recorded inside package.json's own "test" script. This is the
+# runtime alone: the package manager invokes it via node_test_cmd, so naming a
+# manager here would make the script call itself.
+node_test_runner:
+  type: str
+  default: >-
+    {%- if node_runtime == 'deno' -%}deno test {%- else -%}node --test {%- endif -%}
+  when: false
+node_build_cmd:
+  type: str
+  default: >-
+    {%- if node_build == 'tsc' -%}tsc {%- elif node_build == 'tsup' -%}tsup src/index.ts --format esm --dts {%- endif -%}
   when: false
 # ── fork workflow ──
 fork_upstream:

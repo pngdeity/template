@@ -22,8 +22,18 @@ REQUIRED_ROOT_FILES = [
 
 LANG_SPECIFIC_FILES = {
     "python": ["pyproject.toml"],
-    "typescript": ["deno.json", "package.json"],
-    "javascript": ["deno.json", "package.json"],
+{% if has_node %}
+    {% if node_runtime == 'deno' %}
+    "typescript": ["deno.json"],
+    "javascript": ["deno.json"],
+    {% else %}
+    "typescript": [{% if uses_deno %}"deno.json", {% endif %}"package.json"{% if has_node_build %}, "tsconfig.json"{% endif %}],
+    "javascript": [{% if uses_deno %}"deno.json", {% endif %}"package.json"],
+    {% endif %}
+{% else %}
+    "typescript": [],
+    "javascript": [],
+{% endif %}
     "go": [".golangci.yml", ".go-version", "go.mod"],
     "rust": ["rustfmt.toml", "rust-toolchain.toml", "Cargo.toml"],
     "dotnet": ["global.json", "Directory.Build.props", "NuGet.config", "Directory.Packages.props", "{{ dotnet_namespace }}.csproj"],
@@ -48,6 +58,7 @@ CI_SPECIFIC_FILES = {
 {% if has_go %}        ".github/workflows/go.yml",
 {% endif %}{% if has_python %}        ".github/workflows/python.yml",
 {% endif %}{% if has_node %}        ".github/workflows/node.yml",
+{% endif %}{% if is_node_library %}        ".github/workflows/publish.yml",
 {% endif %}{% if has_rust %}        ".github/workflows/rust.yml",
 {% endif %}{% if has_dotnet %}        ".github/workflows/dotnet.yml",
 {% endif %}{% if use_apm %}        ".github/workflows/apm-audit.yml",

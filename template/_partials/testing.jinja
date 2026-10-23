@@ -5,7 +5,7 @@ uv run pytest
 {% endif %}
 {% if has_node %}
 ```bash
-npm test
+{{ node_test_cmd }}
 ```
 {% endif %}
 {% if has_go %}

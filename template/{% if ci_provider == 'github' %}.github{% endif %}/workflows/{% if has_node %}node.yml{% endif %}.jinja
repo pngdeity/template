@@ -11,16 +11,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+{% if node_runtime == 'deno' %}
       - uses: denoland/setup-deno@v2
       - run: deno fmt --check && deno lint
+{% else %}
+{% include 'template/_partials/node-ci-setup.jinja' %}
+      - run: {{ node_lint_cmd }}
+{% if has_node_build %}
+      - run: npx tsc --noEmit
+{% endif %}
+{% endif %}
 
   test:
     runs-on: ubuntu-latest
     needs: lint
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: {{ node_version }}
-      - run: {{ node_package_manager }} install
-      - run: npm test
+{% if node_runtime == 'deno' %}
+      - uses: denoland/setup-deno@v2
+      - run: deno test
+{% else %}
+{% include 'template/_partials/node-ci-setup.jinja' %}
+      - run: {{ node_test_cmd }}
+{% endif %}

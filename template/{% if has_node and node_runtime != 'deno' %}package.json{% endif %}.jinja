@@ -1,0 +1,73 @@
+{% set npm_license = license_type %}
+{% if license_type == 'GPL-3.0' %}{% set npm_license = 'GPL-3.0-only' %}{% endif %}
+{% if license_type == 'proprietary' %}{% set npm_license = 'UNLICENSED' %}{% endif %}
+{% set gh_slug = github_username if github_username else (author_name | lower | replace(' ', '-')) %}
+{% if not gh_slug %}{% set gh_slug = 'OWNER-CHANGEME' %}{% endif %}
+{
+  "name": "{{ repo_name }}",
+  "version": "0.1.0",
+{% if is_node_library %}
+  "private": false,
+{% else %}
+  "private": true,
+{% endif %}
+  "type": "module",
+  "description": "{{ repo_description }}",
+  "license": "{{ npm_license }}",
+{% if is_node_library %}
+  "sideEffects": false,
+{% if node_build == 'none' %}
+  "files": [
+    "src"
+  ],
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+{% else %}
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+{% endif %}
+  "exports": {
+    ".": {
+{% if node_build == 'none' %}
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+{% else %}
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+{% endif %}
+    }
+  },
+  "engines": {
+    "node": ">={{ node_version }}"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/{{ gh_slug }}/{{ repo_name }}.git"
+  },
+  "homepage": "https://github.com/{{ gh_slug }}/{{ repo_name }}#readme",
+  "bugs": {
+    "url": "https://github.com/{{ gh_slug }}/{{ repo_name }}/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+{% endif %}
+  "scripts": {
+    "test": "{{ node_test_runner }}"{% if has_node_build %},
+    "build": "{{ node_build_cmd }}",
+    "typecheck": "tsc --noEmit"{% endif %}{% if is_node_library %},
+    "prepack": "{% if has_node_build %}npm run build && {% endif %}npm test"{% endif %}
+  }{% if node_lint == 'biome' %},
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0"{% if has_node_build %},
+    "typescript": "^5.9.0"{% endif %}
+  }{% elif has_node_build %},
+  "devDependencies": {
+    "typescript": "^5.9.0"{% if node_build == 'tsup' %},
+    "tsup": "^8.0.0"{% endif %}
+  }{% endif %}
+}

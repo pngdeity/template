@@ -3,7 +3,7 @@
 {{ repo_description }}
 
 {% if ci_provider == 'github' %}
-[![CI](https://github.com/{{ github_username | default(author_name | lower | replace(' ', '-')) }}/{{ repo_name }}/actions/workflows/ci.yml/badge.svg)](https://github.com/{{ github_username | default(author_name | lower | replace(' ', '-')) }}/{{ repo_name }}/actions)
+[![CI](https://github.com/{{ github_username | default(author_name | lower | replace(' ', '-')) }}/{{ repo_name }}/actions/workflows/{% if has_node %}node{% elif has_python %}python{% elif has_go %}go{% elif has_rust %}rust{% elif has_dotnet %}dotnet{% else %}secret-scan{% endif %}.yml/badge.svg)](https://github.com/{{ github_username | default(author_name | lower | replace(' ', '-')) }}/{{ repo_name }}/actions)
 {% endif %}
 {% if license_type != 'proprietary' %}
 [![License](https://img.shields.io/badge/license-{{ license_type | replace('-', '--') }}-blue.svg)](LICENSE)

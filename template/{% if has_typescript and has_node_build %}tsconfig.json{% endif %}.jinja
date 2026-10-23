@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "es2024",
+{% if node_build == 'tsc' and is_node_library %}
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "rootDir": "src",
+    "outDir": "dist",
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+{% elif node_build == 'tsc' %}
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "rootDir": "src",
+    "outDir": "dist",
+    "sourceMap": true,
+{% elif node_build == 'tsup' %}
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+{% endif %}
+    "strict": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}

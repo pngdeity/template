@@ -27,6 +27,7 @@ repos:
 {% if has_node %}
   - repo: local
     hooks:
+{% if node_lint == 'deno' %}
       - id: deno-fmt
         name: deno fmt
         entry: deno fmt --check
@@ -39,6 +40,22 @@ repos:
         language: system
         types_or: [javascript, jsx, typescript, tsx]
         pass_filenames: false
+{% if node_lint == 'biome' %}
+      - id: biome-check
+        name: biome check
+        entry: npx biome check --write
+        language: system
+        types_or: [javascript, jsx, typescript, tsx, json]
+        pass_filenames: false
+{% endif %}
+{% if has_node_build and has_typescript %}
+      - id: tsc
+        name: tsc --noEmit
+        entry: npx tsc --noEmit
+        language: system
+        types_or: [typescript, tsx]
+        pass_filenames: false
+{% endif %}
 {% endif %}
 {% if has_go %}
   - repo: https://github.com/dnephin/pre-commit-golang

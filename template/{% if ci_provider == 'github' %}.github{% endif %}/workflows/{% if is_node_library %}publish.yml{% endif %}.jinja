@@ -1,0 +1,29 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Trusted publishing: no NPM_TOKEN. Configure a trusted publisher for this
+# package on npmjs.com first, or the publish step fails authentication.
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: {{ node_version }}
+          registry-url: https://registry.npmjs.org
+          # Caching is never appropriate in a release build.
+          package-manager-cache: false
+{% set node_setup_provided = true %}
+{% include 'template/_partials/node-ci-setup.jinja' %}
+      # prepack runs the build and the tests; running them again here would
+      # execute each of them twice per release.
+      - run: npm publish

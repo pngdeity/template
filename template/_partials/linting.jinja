@@ -6,7 +6,10 @@ uv run mypy src/
 {% endif %}
 {% if has_node %}
 ```bash
-deno fmt --check && deno lint
+{{ node_lint_cmd }}
+{% if has_node_build %}
+npm run typecheck
+{% endif %}
 ```
 {% endif %}
 {% if has_go %}

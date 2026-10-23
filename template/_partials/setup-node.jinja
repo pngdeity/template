@@ -1,3 +1,9 @@
+{% if node_runtime == 'deno' %}
 ```bash
-{{ node_package_manager }} install
+deno --version
 ```
+{% else %}
+```bash
+{{ node_install_cmd }}
+```
+{% endif %}
