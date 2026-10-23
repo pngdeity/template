@@ -76,3 +76,16 @@ trusted publisher on npmjs.com before the first tag push.
 
 `package.json` is in `_skip_if_exists`, so `copier update` will not rewrite it in
 an existing project. Merge new publish fields by hand.
+
+## Staying current with the template
+
+`check-template-update.yml` runs weekly and on demand. It shells out to
+`copier check-update --quiet`, which exits **2** when a newer template version
+exists and **0** when the project is current — any other exit is treated as a
+failure rather than as "up to date". On a stale result it opens one issue
+labelled `template-update`, and skips if one is already open.
+
+This only works when the template is tagged: `check-update` compares PEP 440
+versions derived from git tags on both sides. `git describe --tags` reports the
+highest-ranking tag at a commit, so two tags on the same commit are
+indistinguishable — a new version requires a new commit *and* a new tag.

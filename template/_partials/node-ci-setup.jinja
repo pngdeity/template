@@ -3,6 +3,9 @@
         with:
           node-version: {{ node_version }}
 {% endif %}
+{% if node_setup_deno | default(false) %}
+      - uses: denoland/setup-deno@v2
+{% endif %}
 {% if node_package_manager == 'pnpm' %}
       - uses: pnpm/action-setup@v4
 {% elif node_package_manager == 'yarn' %}

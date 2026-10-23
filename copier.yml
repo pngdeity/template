@@ -36,11 +36,6 @@ _tasks:
   - command: >-
       command -v apm >/dev/null 2>&1 && apm install || echo "  → apm not found — run: apm install"
     when: "{{ use_apm and _copier_operation == 'copy' }}"
-_migrations: []
-# To add a migration:
-#   - version: v1.1.0
-#     command: migrate-script.sh
-#     when: "{{ _stage == 'before' }}"
 # _external_data:
 #   parent_tpl: .copier-answers.yml
 _jinja_extensions:
@@ -87,7 +82,7 @@ _message_after_copy: |
     Create your fork on your forge, then: git remote add origin <your-fork-url>
   {% endif %}
 _message_after_update: |
-  {{ repo_name }} updated from {{ _version_from }} to {{ _version_to }}.
+  {{ repo_name }} updated.
   Review changes with: git diff
   {% if use_precommit %}
   Re-run: pre-commit install
@@ -230,18 +225,24 @@ node_purpose:
   help: Node package purpose
   choices:
     - application
-    - library
+    - - library
+      - value: library
+        validator: "{{ 'a Deno project has no package.json, so it cannot publish to npm' if node_runtime == 'deno' else '' }}"
   default: application
-  when: "{{ has_node and node_runtime != 'deno' }}"
+  when: "{{ has_node }}"
 node_build:
   type: str
   help: Node build and type-check tool
   choices:
     - none
-    - tsc
-    - tsup
+    - - tsc
+      - value: tsc
+        validator: "{{ 'Deno has no tsconfig.json to drive — select none' if node_runtime == 'deno' else '' }}"
+    - - tsup
+      - value: tsup
+        validator: "{{ 'Deno has no tsconfig.json to drive — select none' if node_runtime == 'deno' else '' }}"
   default: none
-  when: "{{ has_node and node_runtime != 'deno' }}"
+  when: "{{ has_node }}"
 node_lint:
   type: str
   help: Node formatter and linter
@@ -276,10 +277,12 @@ include_tasks_lint:
   type: bool
   help: Include CI check that lints TASKS.md?
   default: true
+  ask: "{{ ci_provider == 'github' }}"
 include_annotation_gate:
   type: bool
   help: Include CI check that blocks FIXME/HACK/BUG annotations?
   default: false
+  ask: "{{ ci_provider == 'github' }}"
 include_shell_tooling:
   type: bool
   help: Include shell tooling (.shellcheckrc)?

@@ -1,0 +1,53 @@
+name: Template Update
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+jobs:
+  check-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install copier
+        run: pip install copier
+      # Exit 2 means a newer template version exists; 0 means up to date.
+      - name: Check for a newer template version
+        id: check
+        run: |
+          set +e
+          copier check-update --quiet
+          code=$?
+          set -e
+          case "$code" in
+            0) echo "up to date" ;;
+            2) echo "newer version available"; echo "stale=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "check-update failed with exit $code"; exit "$code" ;;
+          esac
+      - name: Open an issue
+        if: steps.check.outputs.stale == 'true'
+        env:
+          GH_TOKEN: ${{ '{{' }} secrets.GITHUB_TOKEN {{ '}}' }}
+          TEMPLATE_URL: https://github.com/{{ github_username | default(author_name | lower | replace(' ', '-')) }}/template
+        run: |
+          existing=$(gh issue list --label template-update --state open --json number --jq 'length')
+          if [ "$existing" -gt 0 ]; then
+            echo "An open template-update issue already exists; not opening another."
+            exit 0
+          fi
+          gh issue create \
+            --title "Template update available" \
+            --label template-update \
+            --body "A newer version of $TEMPLATE_URL is available.
+
+          Apply it with:
+
+          \`\`\`bash
+          copier update --trust
+          \`\`\`
+          "

@@ -50,8 +50,9 @@ LANG_SPECIFIC_FILES = {
 }
 
 CI_SPECIFIC_FILES = {
-    "github": [
+    {% if ci_provider == 'github' %}"github": [
         ".github/workflows/verify-signed-commits.yml",
+        ".github/workflows/check-template-update.yml",
         {% if include_tasks_lint %}".github/workflows/tasks-lint.yml",
         {% endif %}{% if include_annotation_gate %}".github/workflows/annotation-gate.yml",
         {% endif %}".github/workflows/secret-scan.yml",
@@ -64,7 +65,8 @@ CI_SPECIFIC_FILES = {
 {% endif %}{% if use_apm %}        ".github/workflows/apm-audit.yml",
         ".github/workflows/apm-drift.yml",
 {% endif %}    ],
-}
+{% else %}    "github": [],
+{% endif %}}
 
 LANG_DIRECTORIES = {
     {% if has_python %}{% if python_scaffolding == 'application' %}"python": ["src", "tests"],{% endif %}{% endif %}
