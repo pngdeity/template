@@ -24,36 +24,7 @@
 
 ## P0
 
-- [ ] Generate `.github/dependabot.yml.jinja` — automated dependency updates per ecosystem (@opencode)
-  - **ID**: ci-dependabot
-  - **Tags**: ci, templates
-  - **Details**: Generated projects get every other CI workflow but no
-    Dependabot config, so dependency updates are manual. The ecosystems are the
-    selected languages plus `github-actions`.
-  - **Acceptance**: A rendered project with `ci_provider: github` contains
-    `.github/dependabot.yml` with one `updates` entry per selected ecosystem,
-    and the file is valid YAML.
-  - **Verification**: `bash /tmp/opencode/matrix.sh`
-  - **Files**: `template/{% if ci_provider == 'github' %}.github{% endif %}/dependabot.yml.jinja`, `template/scripts/audit.py.jinja`
-  - **Touches**: `template/{% if ci_provider == 'github' %}.github{% endif %}/`
-  - **Estimate**: 2h
-
-- [ ] Generate issue and pull-request templates (@opencode)
-  - **ID**: ci-templates
-  - **Tags**: ci, templates
-  - **Details**: `.github/ISSUE_TEMPLATE/bug_report.yml`,
-    `feature_request.yml` and `PULL_REQUEST_TEMPLATE.md` are the last pieces of
-    the GitHub surface the template does not scaffold.
-  - **Acceptance**: Rendered under `ci_provider: github`, all three files
-    exist and parse as YAML or Markdown respectively.
-  - **Verification**: `bash /tmp/opencode/matrix.sh`
-  - **Files**: `template/{% if ci_provider == 'github' %}.github{% endif %}/ISSUE_TEMPLATE/`
-  - **Touches**: `template/{% if ci_provider == 'github' %}.github{% endif %}/`
-  - **Estimate**: 2h
-
-## P1
-
-- [ ] Create `scripts/test-template.sh` — render matrix as a repo script (@opencode)
+- [ ] Create `scripts/test-template.sh` — render matrix as a repo script
   - **ID**: test-harness
   - **Tags**: tooling, ci
   - **Details**: The 18-config render matrix currently lives in
@@ -67,7 +38,36 @@
   - **Touches**: `scripts/`
   - **Estimate**: 3h
 
-- [ ] Document `_skip_if_exists` entries in `copier.yml` with inline comments (@opencode)
+- [ ] Generate `.github/dependabot.yml.jinja` — automated dependency updates per ecosystem
+  - **ID**: ci-dependabot
+  - **Tags**: ci, templates
+  - **Details**: Generated projects get every other CI workflow but no
+    Dependabot config, so dependency updates are manual. The ecosystems are the
+    selected languages plus `github-actions`.
+  - **Acceptance**: A rendered project with `ci_provider: github` contains
+    `.github/dependabot.yml` with one `updates` entry per selected ecosystem,
+    and the file is valid YAML.
+  - **Verification**: `bash scripts/test-template.sh`
+  - **Files**: `template/{% if ci_provider == 'github' %}.github{% endif %}/dependabot.yml.jinja`, `template/scripts/audit.py.jinja`
+  - **Touches**: `template/{% if ci_provider == 'github' %}.github{% endif %}/`
+  - **Estimate**: 2h
+
+- [ ] Generate issue and pull-request templates
+  - **ID**: ci-templates
+  - **Tags**: ci, templates
+  - **Details**: `.github/ISSUE_TEMPLATE/bug_report.yml`,
+    `feature_request.yml` and `PULL_REQUEST_TEMPLATE.md` are the last pieces of
+    the GitHub surface the template does not scaffold.
+  - **Acceptance**: Rendered under `ci_provider: github`, all three files
+    exist and parse as YAML or Markdown respectively.
+  - **Verification**: `bash scripts/test-template.sh`
+  - **Files**: `template/{% if ci_provider == 'github' %}.github{% endif %}/ISSUE_TEMPLATE/`
+  - **Touches**: `template/{% if ci_provider == 'github' %}.github{% endif %}/`
+  - **Estimate**: 2h
+
+## P1
+
+- [ ] Document `_skip_if_exists` entries in `copier.yml` with inline comments
   - **ID**: docs-skip-if-exists
   - **Tags**: docs
   - **Details**: Each entry protects a file an adopter is likely to have
@@ -80,7 +80,7 @@
   - **Touches**: `copier.yml`
   - **Estimate**: 30m
 
-- [ ] Add a `_migrations` worked example (v1.0.0 → v1.1.0) (@opencode)
+- [ ] Add a `_migrations` worked example (v1.0.0 → v1.1.0)
   - **ID**: docs-migrations
   - **Tags**: docs, copier
   - **Details**: Migrations are the one Copier feature the template documents
@@ -95,7 +95,7 @@
 
 ## P2
 
-- [ ] Audit: verify `detect.py` marks every answerable boolean toggle (@opencode)
+- [ ] Audit: verify `detect.py` marks every answerable boolean toggle
   - **ID**: detect-coverage
   - **Tags**: tooling
   - **Details**: `use_commitizen` and `use_devcontainer` have no marker in
@@ -109,21 +109,21 @@
   - **Touches**: `template/scripts/`
   - **Estimate**: 1h
 
-- [ ] Non-Go task runner partials (Taskfile for Python, Node, Rust) (@opencode)
+- [ ] Non-Go task runner partials (Taskfile for Python, Node, Rust)
   - **ID**: taskfile-others
   - **Tags**: templates, tooling
   - **Details**: `_partials/taskfile-go.jinja` exists but has no counterpart,
     so only Go projects get a task runner.
   - **Acceptance**: A rendered Python, Node and Rust project each contains a
     `Taskfile.yml` whose targets match that language's commands.
-  - **Verification**: `bash /tmp/opencode/matrix.sh`
+  - **Verification**: `bash scripts/test-template.sh`
   - **Files**: `template/_partials/`
   - **Touches**: `template/_partials/`
   - **Estimate**: 3h
 
 ## P3
 
-- [ ] Add a `toolchain` directive question to `go.mod` (@opencode)
+- [ ] Add a `toolchain` directive question to `go.mod`
   - **ID**: go-toolchain
   - **Tags**: go
   - **Details**: Go 1.21+ supports `toolchain`, which pins the compiler
@@ -131,12 +131,12 @@
     offers it.
   - **Acceptance**: With the new question set, `go.mod` contains a `toolchain`
     line; with it unset, `go.mod` is byte-identical to today's output.
-  - **Verification**: `bash /tmp/opencode/matrix.sh`
+  - **Verification**: `bash scripts/test-template.sh`
   - **Files**: `template/{% if has_go %}go.mod{% endif %}.jinja`, `copier.yml`
   - **Touches**: `template/{% if has_go %}go.mod{% endif %}.jinja`, `copier.yml`
   - **Estimate**: 1h
 
-- [ ] SHA-pin all GitHub Actions in the generated workflows (@opencode)
+- [ ] SHA-pin all GitHub Actions in the generated workflows
   - **ID**: ci-pin-actions
   - **Tags**: ci, security
   - **Details**: Workflows reference `@v4`/`@v5` tags, which are mutable. Pinning
@@ -144,7 +144,7 @@
     must be mechanical.
   - **Acceptance**: Every `uses:` line in every rendered workflow references a
     40-character commit SHA with the version in a trailing comment.
-  - **Verification**: `bash /tmp/opencode/matrix.sh`
+  - **Verification**: `bash scripts/test-template.sh`
   - **Files**: `template/{% if ci_provider == 'github' %}.github{% endif %}/workflows/`
   - **Touches**: `template/{% if ci_provider == 'github' %}.github{% endif %}/workflows/`
   - **Estimate**: 2h

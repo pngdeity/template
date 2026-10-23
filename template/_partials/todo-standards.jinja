@@ -1,14 +1,10 @@
-Tag type and description in source comments.
+A `TODO` marks planned work. A `FIXME` marks broken behaviour and a `HACK` a
+fragile workaround; both are debt, so either fix them or file them as a task in
+[TASKS.md](TASKS.md). `BUG` marks a defect known to affect users and should
+never be merged unresolved.
 
-| Tag | Use |
-|-----|-----|
-| `TODO` | Planned work |
-| `FIXME` | Broken behavior |
-| `HACK` | Fragile workaround |
-| `BUG` | Active defect |
-| `NOTE` | Informational, no action |
-
-Format: uppercase tag, colon, imperative description. Include an issue reference when possible.
+Write the tag in uppercase followed by a colon and an imperative description,
+and cite an issue when one exists.
 ```
 // TODO: implement retry logic (#42)
 // FIXME: panics on empty input

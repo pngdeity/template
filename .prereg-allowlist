@@ -1,0 +1,14 @@
+# Task IDs grandfathered past the rule-#9 pre-registration gate.
+# One ID per line; `#` starts a comment and blank lines are ignored.
+#
+# These were filed before the gate existed and carry no hypothesis to state.
+# New tasks should satisfy the gate rather than be added here.
+ci-dependabot
+ci-templates
+test-harness
+docs-skip-if-exists
+docs-migrations
+detect-coverage
+taskfile-others
+go-toolchain
+ci-pin-actions

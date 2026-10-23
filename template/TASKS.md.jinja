@@ -60,7 +60,7 @@ dotnet test
     ID, Details, and a Verification command. No finding is duplicated by an
     existing task. This block is removed in the same commit. No source file
     outside TASKS.md changed.
-  - **Verification**: `npx @tasks-md/lint TASKS.md && test "$(git diff --name-only HEAD~1 -- . | grep -vc '^TASKS\.md$')" = 0`
+  - **Verification**: `npx @tasks-md/lint TASKS.md && test -z "$(git status --porcelain -- . ':!TASKS.md')"`
   - **Files**: `TASKS.md`, `AGENTS.md`, `docs/`
   - **Touches**: `TASKS.md`
 

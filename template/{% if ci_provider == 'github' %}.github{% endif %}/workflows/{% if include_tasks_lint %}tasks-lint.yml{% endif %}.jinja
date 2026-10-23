@@ -10,30 +10,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-{% if use_prereg %}
       # Every TASKS.md in the repository, not just the root one: monorepos keep
       # one queue per package, and a malformed nested file blocks just the same.
+      # node_modules is excluded because a committed dependency may ship its own.
       - name: Lint every TASKS.md
         run: |
-          mapfile -t files < <(git ls-files -z '*TASKS.md' | xargs -0 -r -n1 printf '%s\n')
+          mapfile -t files < <(git ls-files -z '*TASKS.md' | tr '\0' '\n' | grep -v '/node_modules/' || true)
           if [ {{ '${#files[@]}' }} -eq 0 ]; then
-            echo 'No TASKS.md at the repository root, but this workflow was'
+            echo 'No TASKS.md found in this repository, but this workflow was'
             echo 'installed by include_tasks_lint. Restore TASKS.md, or remove'
             echo '.github/workflows/tasks-lint.yml and this check.'
+            exit 1
+          fi
+{% if use_prereg %}
+          # Grandfathered IDs live in .prereg-allowlist, one per line. The
+          # linter reads that file without checking that it exists first.
+          if [ ! -f .prereg-allowlist ]; then
+            echo 'use_prereg is on but .prereg-allowlist is missing.'
             exit 1
           fi
           npx @tasks-md/lint --require-prereg --prereg-allowlist=.prereg-allowlist "${files[@]}"
 {% else %}
-      # Every TASKS.md in the repository, not just the root one: monorepos keep
-      # one queue per package, and a malformed nested file blocks just the same.
-      - name: Lint every TASKS.md
-        run: |
-          mapfile -t files < <(git ls-files -z '*TASKS.md' | xargs -0 -r -n1 printf '%s\n')
-          if [ {{ '${#files[@]}' }} -eq 0 ]; then
-            echo 'No TASKS.md at the repository root, but this workflow was'
-            echo 'installed by include_tasks_lint. Restore TASKS.md, or remove'
-            echo '.github/workflows/tasks-lint.yml and this check.'
-            exit 1
-          fi
           npx @tasks-md/lint "${files[@]}"
 {% endif %}

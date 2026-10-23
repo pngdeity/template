@@ -57,14 +57,20 @@ larger one without making it a sub-task, so it stays separately claimable.
 task, so a later reader can tell queued findings from requested work.
 {% if use_prereg %}
 {{ '' }}
-Three or more non-trivial tasks in this queue must carry a pre-registration
-block of five fields: `**Hypothesis**`, `**Success**`, `**Pivot**`,
-`**Measurement**`, and `**Anchor**`. The hypothesis states the prediction, the
-success and pivot thresholds make it falsifiable, the measurement is a runnable
-command rather than an English description, and the anchor is the source the
-threshold came from. Bug fixes are not exempt. Purely mechanical changes are:
-their existing CI gate is the metric. If the measurement cannot be run yet, land
-the instrumentation first and block the task on it.
+Every task that carries an `**ID**` must also carry a pre-registration block of
+five fields: `**Hypothesis**`, `**Success**`, `**Pivot**`, `**Measurement**`,
+and `**Anchor**`. The hypothesis states the prediction, the success and pivot
+thresholds make it falsifiable, the measurement is a runnable command rather
+than an English description, and the anchor is the source the threshold came
+from. Bug fixes are not exempt. If the measurement cannot be run yet, land the
+instrumentation first and block the task on it.
+
+A task you cannot yet specify to that standard is either not ready or is id-only
+in the wrong way: drop its `**ID**` so it is a plain note and cannot be a
+blocker target, or list its ID in `.prereg-allowlist` if it predates this
+policy. That file holds one task ID per line; `#` starts a comment and blank
+lines are ignored. The linter reads it without checking that it exists, so the
+file must be present whenever `--prereg-allowlist` is passed.
 {{ '' }}{% endif %}
 
 ### Fields agents write, not authors
