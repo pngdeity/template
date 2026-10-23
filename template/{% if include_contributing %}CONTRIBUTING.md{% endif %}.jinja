@@ -13,14 +13,7 @@
 {% endif %}
 ## Development Setup
 
-{% include 'template/_partials/prerequisites.jinja' %}
-
-{% if has_python %}{% include 'template/_partials/setup-python.jinja' %}{% endif %}
-{% if has_node %}{% include 'template/_partials/setup-node.jinja' %}{% endif %}
-{% if has_go %}{% include 'template/_partials/setup-go.jinja' %}{% endif %}
-{% if has_rust %}{% include 'template/_partials/setup-rust.jinja' %}{% endif %}
-{% if has_dotnet %}{% include 'template/_partials/setup-dotnet.jinja' %}{% endif %}
-{% if has_tofu %}{% include 'template/_partials/setup-tofu.jinja' %}
+{% include 'template/_partials/prerequisites.jinja' %}{% if has_tofu %}
 {% include 'template/_partials/tofu-layers.jinja' %}
 {% endif %}
 
