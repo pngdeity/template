@@ -137,6 +137,19 @@ def configs() -> list[Config]:
                 "node_package_manager": "yarn",
             },
         ),
+        Config(
+            "ts-plugin-peer",
+            {
+                **ts,
+                "node_purpose": "plugin",
+                "node_package_manager": "bun",
+                "node_runtime": "bun",
+                "node_lint": "biome",
+                "author_email": "dev@example.com",
+                "node_keywords": "[opencode, plugin]",
+                "node_peer_dependencies": '{"@opencode/plugin": ">=2.0.0", "solid-js": "^1.9.0"}',
+            },
+        ),
         # --- Other languages --------------------------------------------------
         Config("py-app", py),
         Config("py-tool", {**py, "python_scaffolding": "tooling"}),

@@ -267,6 +267,18 @@ node_subpath_exports:
     Extra subpath entrypoints, one per line as name: path (e.g. core: src/core.ts). Leave empty for none. "server" and "tui" are already emitted for a plugin, and "." is always present unless the purpose is plugin with no build.
   default: []
   when: "{{ is_node_publishable | default(false) }}"
+node_keywords:
+  type: yaml
+  help: >-
+    npm keywords, one per line. "opencode-plugin" is added automatically when the purpose is plugin.
+  default: []
+  when: "{{ has_node and node_runtime != 'deno' }}"
+node_peer_dependencies:
+  type: yaml
+  help: >-
+    Packages the host application provides, one per line as name: version (e.g. "@opencode/plugin": ">=2.0.0"). Leave empty for none.
+  default: []
+  when: "{{ has_node and node_runtime != 'deno' }}"
 ci_provider:
   type: str
   help: CI/CD provider

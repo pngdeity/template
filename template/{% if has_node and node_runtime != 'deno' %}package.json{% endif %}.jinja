@@ -18,6 +18,24 @@
   "type": "module",
   "description": "{{ repo_description }}",
   "license": "{{ npm_license }}",
+{% if author_name %}
+  "author": "{{ author_name }}{% if author_email %} <{{ author_email }}>{% endif %}",
+{% endif %}
+{% set keyword_list = (['opencode-plugin'] if is_node_plugin else []) + (node_keywords or []) %}
+{% if keyword_list %}
+  "keywords": [{{ '' }}
+{% for kw in keyword_list %}
+    "{{ kw | trim }}"{% if not loop.last %},{% endif %}{{ "\n" | trim }}
+{% endfor %}
+  ],
+{% endif %}
+{% if node_peer_dependencies %}
+  "peerDependencies": {
+{% for dep, version in node_peer_dependencies.items() %}
+    "{{ dep }}": "{{ version }}"{% if not loop.last %},{% endif %}{{ "\n" | trim }}
+{% endfor %}
+  },
+{% endif %}
 {% if is_node_plugin %}
   "sideEffects": false,
 {% if node_build == 'none' %}
