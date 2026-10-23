@@ -106,7 +106,7 @@ repo_description:
 author_name:
   type: str
   help: Author or organization name
-  default: ""
+  default: "Nathan Somers"
 author_email:
   type: str
   help: Author or organization email
