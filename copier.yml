@@ -115,7 +115,7 @@ author_email:
 github_username:
   type: str
   help: GitHub username or org slug (URL-safe, used in repo URLs)
-  default: "{{ author_name | lower | replace(' ', '-') }}"
+  default: "pngdeity"
 license_type:
   type: str
   help: License
