@@ -50,7 +50,9 @@ _tasks:
 # `static/`, so `scripts/migrations/v1_1_0_remove_static.py` finds nothing and
 # exits 0. Replace it when the first real migration is needed.
 _migrations:
-  - version: v1.1.0
+  # Quoted: PyYAML reads a bare 1.1.0 as a string, but Copier compares versions
+  # as PEP 440 and a bare 1.10.0 would read as 1.1.
+  - version: "1.1.0"
     command: "python3 scripts/migrations/v1_1_0_remove_static.py ."
     when: "{{ _copier_operation == 'update' }}"
 # _external_data:

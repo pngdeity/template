@@ -1,4 +1,4 @@
-# pngdeity/template
+# Pngdeity/template
 
 Standardized Git repository template for pngdeity projects. Scaffolds consistent
 governance files, language tooling configs, CI/CD pipelines, and agent scaffolding
@@ -17,16 +17,16 @@ copier copy gh:pngdeity/template /path/to/new-project
 copier adopt gh:pngdeity/template /path/to/existing-project
 ```
 
-## Languages Supported
+## Languages supported
 
-| Language | Configs Generated |
-|----------|-------------------|
-| Python | pyproject.toml (ruff, mypy, pytest) |
-| JavaScript/TypeScript | deno.json, package.json |
-| Go | go.mod, .golangci.yml, .go-version |
-| Rust | Cargo.toml, rustfmt.toml, rust-toolchain.toml |
-| .NET / C# | .csproj, Directory.Build.props, Directory.Packages.props, global.json, NuGet.config |
-| OpenTofu | versions.tf, main.tf, variables.tf, outputs.tf, backend.tf, .tflint.hcl, .env.example |
+| Language              | Configs Generated                                                                     |
+| --------------------- | ------------------------------------------------------------------------------------- |
+| Python                | pyproject.toml (ruff, mypy, pytest)                                                   |
+| JavaScript/TypeScript | package.json, deno.json, tsconfig.json (per answers)                                  |
+| Go                    | go.mod, .golangci.yml, .go-version                                                    |
+| Rust                  | Cargo.toml, rustfmt.toml, rust-toolchain.toml                                         |
+| .NET / C#             | .csproj, Directory.Build.props, Directory.Packages.props, global.json, NuGet.config   |
+| OpenTofu              | versions.tf, main.tf, variables.tf, outputs.tf, backend.tf, .tflint.hcl, .env.example |
 
 ## Features
 
@@ -37,6 +37,8 @@ copier adopt gh:pngdeity/template /path/to/existing-project
 - APM agent scaffolding (apm.yml, .apm/ directory)
 - Task tracking (TASKS.md, inline TODO conventions)
 - Compliance audit script (A–D grade scoring)
+- A render matrix (`scripts/test_template.py`) that scaffolds every supported
+  answer combination and checks the output, also run in CI
 
 ## License
 

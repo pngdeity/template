@@ -42,15 +42,21 @@ with another, and never build at all.
 | `node_runtime`         | `node`, `bun`, `deno`              | Test runner in `package.json`; whether `package.json` exists at all |
 | `node_purpose`         | `application`, `library`, `plugin` | `private`, `exports`, `files`, publish workflow presence            |
 | `node_build`           | `none`, `tsc`, `tsup`              | `tsconfig.json` presence and emit settings                          |
-| `node_lint`            | `deno`, `biome`                    | Pre-commit hooks, CI lint step                                      |
+| `node_lint`            | `deno`, `biome`                    | Formatter and linter: pre-commit hooks, CI lint step                |
 
-`node_purpose` and `node_build` are not asked when the runtime is `deno`: a Deno
-project has no compiler config to choose and cannot be an npm library. That
-constraint is what keeps the reachable matrix small enough to verify.
+`node_purpose` and `node_build` are unavailable when the runtime is `deno`: a
+Deno project has no compiler config to choose, and cannot be an npm library or
+an OpenCode plugin, whose manifest is a `package.json` entrypoint. Those choices
+are refused with a validator message rather than hidden, so an answer that
+cannot be honoured explains itself instead of vanishing from the list.
 
 `node_lint: deno` is refused when the package manager is `bun` or `pnpm`: those
 installers lay out `node_modules` differently from npm, so deno cannot resolve
 the tree it is asked to lint.
+
+Setting the runtime to `bun` and leaving the linter at `deno` would install both
+tools and give the project a runner it cannot rely on, so the refused choice is
+the one the default resolves to: a bun project must say `biome`.
 
 Consequences worth knowing:
 
@@ -127,7 +133,7 @@ added (answering it is the adopter's job).
 
 ```yaml
 _migrations:
-  - version: v1.1.0
+  - version: 1.1.0
     command: "python3 scripts/migrations/v1_1_0_remove_static.py ."
     when: "{{ _copier_operation == 'update' }}"
 ```
@@ -135,16 +141,20 @@ _migrations:
 `version` is the template version that introduces the change. Migrations at or
 below the version the project recorded are skipped, so an entry is written once
 and never edited; a mistake in one is fixed by the next version, not by rewriting
-history. The `when` clause is a template expression evaluated per run — this
-example restricts the migration to `update`, because a fresh `copy` has nothing
-to migrate.
+history. It is a plain version number, not a git ref: `v1.1.0` is not PEP 440
+and Copier rejects it. The `when` clause is a template expression evaluated per
+run — this example restricts the migration to `update`, because a fresh `copy`
+has nothing to migrate.
 
-The command is a script under `scripts/migrations/`, never an inline shell
-pipeline. A migration runs in the adopter's working tree with their files, so it
-must be reviewable in a diff, testable on its own, and refuse rather than guess
-when it finds something it does not recognise. The shipped
+The command is a script under the template repo's `scripts/migrations/`, never an
+inline shell pipeline. Copier runs it from the destination project, so the path
+addresses the installed template source, not the adopter's tree; the script
+receives the project root as its argument and must resolve everything under that
+and nothing else. A migration runs with the adopter's files, so it must be
+reviewable in a diff, testable on its own, and refuse rather than guess when it
+finds something it does not recognise. The shipped
 `v1_1_0_remove_static.py` is the worked example of that discipline: it removes
 `static/` only when the directory exists **and** is empty, and otherwise tells
-the operator what to move and exits non-zero. It is inert today — no version of
-this template ever rendered `static/`, so it finds nothing and exits 0 — which
-is the property that makes it safe to ship as a reference.
+the operator what to move and exits non-zero. No version of this template ever
+rendered `static/`, so it finds nothing — which is the property that makes it
+safe to ship as a reference before the first real migration needs it.

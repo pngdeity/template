@@ -9,16 +9,34 @@ Checks applied to every render:
   * the render succeeded
   * every JSON file parses
   * every workflow parses as YAML
-  * no unevaluated Jinja markers survive into output
-  * `npx @tasks-md/lint TASKS.md` reports zero errors
+  * no unevaluated Jinja markers survive into output (GitHub's `${{ }}` aside)
+  * `@tasks-md/lint TASKS.md` reports zero errors
   * `python3 scripts/audit.py` reports Grade A
   * no document contains a double blank line
+  * README `## Usage` is not a fence of comments only
+
+One config (`adopt-node`) exercises the update path instead of a fresh copy: it
+copies the template onto a project that already has a `package.json`, then runs
+`copier update` from a commit containing the working tree.
 
 Usage:
     python3 scripts/test_template.py            # full matrix
+    python3 scripts/test_template.py --changed  # only what the working tree touches
+    python3 scripts/test_template.py --full     # ignore the pass cache
     python3 scripts/test_template.py --list     # list config names
     python3 scripts/test_template.py bun py-app # only these configs
     python3 scripts/test_template.py --keep     # leave renders in the work dir
+
+A config that already passed against this exact template tree is reported as
+cached instead of rendered again; any edit anywhere invalidates the cache, so
+it never stands in for a render of the change under test. The cache is
+per-machine and opt-in: CI renders everything, because a job cannot inherit the
+tree hash a previous run verified.
+
+`--shard N/M` splits the selected configs into M contiguous slices and runs
+slice N, which is how CI spreads the matrix across jobs. A shard reports its
+holdings on the first line so a fan-out that silently drops a config is
+visible in the log.
 
 Exit status is non-zero if any check fails.
 """
@@ -27,11 +45,15 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import hashlib
 import json
+import os
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -55,8 +77,11 @@ DOC_FILES = (
 )
 
 # Jinja allowlist: this file is a Go template for terraform-docs, so its
-# `{{ .Header }}` and friends are output, not unevaluated Jinja.
-JINJA_ALLOWED = (".github/workflows", ".terraform-docs.yml")
+# `{{ .Header }}` and friends are output, not unevaluated Jinja. GitHub
+# expressions (`${{ ... }}`) are handled separately in check_jinja, because
+# they appear in workflows that must still be scanned for real Jinja.
+JINJA_ALLOWED = (".terraform-docs.yml",)
+GITHUB_EXPRESSION = re.compile(r"\$\{\{.*?\}\}", re.DOTALL)
 
 
 @dataclass
@@ -221,8 +246,20 @@ def lint_command() -> list[str]:
     found = shutil.which("tasks-lint")
     if found:
         return [found]
-    for cache in (Path.home() / ".cache/npm/_npx", Path.home() / ".npm/_npx"):
-        for candidate in cache.glob("*/node_modules/.bin/tasks-lint"):
+    # npm follows the XDG base directory spec and names the directory itself,
+    # so ask it: hardcoding ~/.npm finds nothing on a machine with
+    # XDG_CACHE_HOME set, and hardcoding ~/.cache/npm finds nothing on a
+    # machine without it.
+    roots = []
+    probe = subprocess.run(
+        ["npm", "config", "get", "cache"], capture_output=True, text=True
+    )
+    if probe.returncode == 0 and probe.stdout.strip():
+        roots.append(Path(probe.stdout.strip()))
+    roots.append(Path.home() / ".cache/npm")
+    roots.append(Path.home() / ".npm")
+    for root in roots:
+        for candidate in (root / "_npx").glob("*/node_modules/.bin/tasks-lint"):
             return [str(candidate)]
     return ["npx", "--yes", "@tasks-md/lint"]
 
@@ -306,10 +343,15 @@ def check_jinja(dest: Path, problems: list[str]) -> None:
         if not path.is_file() or path.suffix not in (".md", ".yml", ".yaml", ".json"):
             continue
         rel = path.relative_to(dest).as_posix()
-        if any(rel.startswith(allowed) for allowed in JINJA_ALLOWED):
+        if rel in JINJA_ALLOWED:
             continue
         text = path.read_text(errors="replace")
-        if "{% " in text or "{{ " in text:
+        # GitHub expressions are `${{ ... }}`, so they are output rather than
+        # unevaluated Jinja. Exempting the whole `.github/workflows` directory
+        # instead would let a real `{{ repo_name }}` pasted into a workflow
+        # through unnoticed, which is what this check exists to catch.
+        stripped = GITHUB_EXPRESSION.sub("", text)
+        if "{% " in stripped or "{{ " in stripped:
             problems.append(f"unevaluated Jinja in {rel}")
 
 
@@ -380,11 +422,133 @@ def check_manifest_overwritten(dest: Path, problems: list[str]) -> None:
     manifest = dest / "package.json"
     if not manifest.exists():
         return
-    data = json.loads(manifest.read_text())
+    try:
+        data = json.loads(manifest.read_text())
+    except json.JSONDecodeError:
+        # check_json already reports the parse failure for this file; raising
+        # here would abort the whole matrix instead of one config.
+        return
     if "leftover-key" in data:
         problems.append("package.json kept the adopter's hand-written keys")
     if not data.get("exports"):
         problems.append("package.json is missing the template's exports block")
+
+
+def template_fingerprint() -> str:
+    """Hash every input a render depends on: the whole tree, minus git.
+
+    Paths as well as contents are hashed, because a rename changes the output.
+    """
+    digest = hashlib.sha256()
+    for path in sorted(REPO_ROOT.glob("**/*")):
+        if not path.is_file():
+            continue
+        parts = path.relative_to(REPO_ROOT).parts
+        if any(p in (".git", "__pycache__", ".ruff_cache", ".serena") for p in parts):
+            continue
+        digest.update(path.relative_to(REPO_ROOT).as_posix().encode())
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def cache_path() -> Path:
+    key = hashlib.sha256(str(REPO_ROOT).encode()).hexdigest()[:12]
+    return Path(tempfile.gettempdir()) / f"template-matrix-{key}.json"
+
+
+def cached_configs(fingerprint: str) -> dict[str, list[str]]:
+    """Configs already passed against this exact template fingerprint.
+
+    Keyed by a hash of the whole tree, so any edit anywhere invalidates all of
+    them: the cache answers "is this file still verified", never "is it probably
+    still fine". That is why it is advisory and `--full` ignores it.
+    """
+    try:
+        data = json.loads(cache_path().read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if data.get("fingerprint") != fingerprint:
+        return {}
+    return data.get("passed", {})
+
+
+def remember(fingerprint: str, results: dict[str, list[str]]) -> None:
+    passed = {name: problems for name, problems in results.items() if not problems}
+    try:
+        cache_path().write_text(
+            json.dumps({"fingerprint": fingerprint, "passed": passed})
+        )
+    except OSError:
+        pass
+
+
+def changed_configs(all_configs: list[Config]) -> list[Config]:
+    """Configs a change could plausibly affect, from the working tree.
+
+    Coarse on purpose: over-selecting costs a render, under-selecting costs a
+    false pass. A change to `copier.yml`, a partial, or a file rendered into
+    every config reaches everything; a change confined to one conditional file
+    narrows to configs whose answers select that file.
+    """
+    proc = subprocess.run(
+        ["git", "status", "--porcelain", "--untracked-files=all"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    paths = [line[3:].strip() for line in proc.stdout.splitlines() if line.strip()]
+    if not paths:
+        return []
+    for path in paths:
+        name = Path(path).name
+        if (
+            path == "copier.yml"
+            or "/_partials/" in path
+            or path.startswith("_partials/")
+            # A filename with no condition is rendered into every config, but
+            # only files under `template/` are rendered at all.
+            or ("{%" not in name and path.startswith("template/"))
+        ):
+            return all_configs
+    selected = []
+    for cfg in all_configs:
+        for path in paths:
+            conditions = re.findall(r"\{%\s*if\s+([^%]+?)\s*%\}", Path(path).name)
+            if any(condition_gate(cfg, condition) for condition in conditions):
+                selected.append(cfg)
+                break
+    return selected
+
+
+def condition_gate(cfg: Config, condition: str) -> bool:
+    """Whether this config could take the branch guarded by `condition`.
+
+    Answers never pass through Copier here, so the condition is matched against
+    the config's data. Terms are `and`-joined `has_<lang>` tests or
+    `<answer> <op> '<value>'` comparisons; anything else is assumed to apply,
+    because a wrong "no" silently drops a config from the run.
+    """
+    return all(gate_term(cfg, term) for term in condition.split(" and "))
+
+
+def gate_term(cfg: Config, term: str) -> bool:
+    term = term.strip()
+    match = re.fullmatch(r"has_(\w+)", term)
+    if match:
+        languages = cfg.data.get(LANGUAGES, "")
+        if match.group(1) == "node":
+            return "typescript" in languages or "javascript" in languages
+        return match.group(1) in languages
+    match = re.fullmatch(r"(\w+)\s*(==|!=)\s*'([^']*)'", term)
+    if match:
+        key, operator, value = match.groups()
+        if key not in cfg.data:
+            return True
+        equal = cfg.data[key] == value
+        return equal if operator == "==" else not equal
+    return True
 
 
 def git(dest: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -403,14 +567,73 @@ def git(dest: Path, *args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
+_SNAPSHOT: tuple[str, str] | None = None
+_SNAPSHOT_LOCK = threading.Lock()
+
+
+def snapshot_template(dest: Path) -> tuple[str | None, str]:
+    """Commit the working tree into a scratch clone, so an update can replay it.
+
+    `copier update` replays the revision recorded in `_commit`, not the working
+    tree. Pointing that at a git tag would test the tag instead of the change
+    under test, so the copy is made from a commit containing exactly what is on
+    disk now.
+    """
+    with _SNAPSHOT_LOCK:
+        global _SNAPSHOT
+        if _SNAPSHOT is not None:
+            return _SNAPSHOT[0], ""
+        if dest.exists():
+            shutil.rmtree(dest)
+        shutil.copytree(
+            REPO_ROOT,
+            dest,
+            ignore=shutil.ignore_patterns(
+                ".git", "__pycache__", ".ruff_cache", ".serena"
+            ),
+        )
+        for args in (("init", "-q"), ("add", "-A"), ("commit", "-q", "-m", "snapshot")):
+            result = git(dest, *args)
+            if result.returncode != 0:
+                return None, (result.stdout + result.stderr).strip()
+        head = git(dest, "rev-parse", "HEAD")
+        if head.returncode != 0:
+            return None, (head.stdout + head.stderr).strip()
+        _SNAPSHOT = (head.stdout.strip(), str(dest))
+        return _SNAPSHOT[0], ""
+
+
+def prepare_snapshot(out_dir: Path) -> None:
+    """Build the snapshot before the pool opens, not inside one worker.
+
+    `copier update` needs a commit of the working tree, and the copy is cheap
+    but serialised behind a lock. Left to the adopt config it lands on the
+    critical path of a single worker while the rest of the pool idles, which
+    is what made the matrix slower than the copies it replaced.
+    """
+    snapshot_template(out_dir / "template-snapshot")
+
+
 def adopt(copier: str, cfg: Config, dest: Path) -> tuple[bool, str]:
-    # Prove the update path, not just the copy path: adopt a project that
-    # already has its own package.json, then update it from the template.
+    """Prove the update path, not just the copy path.
+
+    A project that already has its own `package.json` is copied from the
+    template, then updated from it. The two runs are deliberately different
+    revisions: the copy comes from the working tree so the project starts with
+    the template's current answers, and the update replays a commit taken from
+    the same working tree, so any file the template stopped skipping is
+    regenerated. Recording the copy against a tag would test the tag.
+    """
     dest.mkdir(parents=True, exist_ok=True)
     (dest / "package.json").write_text(
         json.dumps({"name": "hand-written", "leftover-key": True}, indent=2) + "\n"
     )
     (dest / "README.md").write_text("# Hand written\n")
+
+    snapshot, log = snapshot_template(dest.parent / "template-snapshot")
+    if snapshot is None:
+        return False, log
+
     data_args: list[str] = []
     for key, value in cfg.data.items():
         data_args += ["--data", f"{key}={value}"]
@@ -428,6 +651,8 @@ def adopt(copier: str, cfg: Config, dest: Path) -> tuple[bool, str]:
             "HEAD",
             str(TEMPLATE),
             str(dest),
+            "--data",
+            f"repo_name=m-{cfg.name}",
             *data_args,
             "--data",
             "use_precommit=false",
@@ -438,22 +663,38 @@ def adopt(copier: str, cfg: Config, dest: Path) -> tuple[bool, str]:
     )
     if proc.returncode != 0:
         return False, (proc.stdout + proc.stderr).strip()
-    # `update` refuses a dirty destination, and it replays the recorded
-    # `_commit` — a revision no clone can resolve after a copy from a dirty
-    # working tree. Rewrite it to the tag both sides agree on, and commit that
-    # before updating so the tree is clean.
+
+    # `update` refuses a dirty destination. Rewrite `_commit` to the snapshot
+    # before committing, so the single commit both cleans the tree and pins the
+    # revision the update replays.
     answers = dest / ".copier-answers.yml"
     answers.write_text(
         "\n".join(
-            "_commit: v1.0.0" if line.startswith("_commit:") else line
+            f"_commit: {snapshot}" if line.startswith("_commit:") else line
             for line in answers.read_text().splitlines()
         )
         + "\n"
     )
+    # `_src_path` is what `update` clones, and `_commit` is resolved inside that
+    # clone — not in the destination, which already holds the commit. So the
+    # answers must point at the snapshot repo as the source, or the update
+    # fails with `Unknown revision: <snapshot>`.
+    lines = answers.read_text().splitlines()
+    snapshot_repo = _SNAPSHOT[1] if _SNAPSHOT else ""
+    rewritten: list[str] = []
+    for line in lines:
+        if line.startswith("_src_path:"):
+            rewritten.append(f"_src_path: {snapshot_repo}")
+        elif line.startswith("_commit:"):
+            rewritten.append(f"_commit: {snapshot}")
+        else:
+            rewritten.append(line)
+    answers.write_text("\n".join(rewritten) + "\n")
     for args in (("add", "-A"), ("commit", "-q", "-m", "adopted")):
         result = git(dest, *args)
         if result.returncode != 0:
             return False, (result.stdout + result.stderr).strip()
+
     proc = subprocess.run(
         [copier, "update", "--trust", "--defaults", "--quiet"],
         cwd=dest,
@@ -474,7 +715,10 @@ def run_config(copier: str, cfg: Config, out_dir: Path) -> list[str]:
     if not ok:
         tail = "\n".join(log.splitlines()[-6:])
         return [f"render failed:\n{tail}"]
+    return check_output(cfg, dest)
 
+
+def check_output(cfg: Config, dest: Path) -> list[str]:
     problems: list[str] = []
     check_json(dest, problems)
     check_yaml(dest, problems)
@@ -501,11 +745,37 @@ def check_detect_coverage(problems: list[str]) -> None:
         text=True,
     )
     if proc.returncode != 0:
-        detail = (proc.stdout + proc.stderr).strip().splitlines()
+        # detail[0] is the header; every line after it is a question name.
+        names = [
+            line.strip().lstrip("- ").strip()
+            for line in (proc.stdout + proc.stderr).strip().splitlines()[1:]
+        ]
         problems.append(
             "detect.py --check-coverage failed: "
-            + ("; ".join(line.strip() for line in detail[1:4]) or "no output")
+            + (", ".join(name for name in names if name) or "no output")
         )
+
+
+def parse_shard(spec: str) -> tuple[int, int]:
+    """Parse `N/M` into a zero-based shard index and a shard count."""
+    match = re.fullmatch(r"(\d+)/(\d+)", spec.strip())
+    if not match:
+        raise argparse.ArgumentTypeError(f"expected N/M, got {spec!r}")
+    index, count = int(match.group(1)), int(match.group(2))
+    if count < 1 or not 0 <= index < count:
+        raise argparse.ArgumentTypeError(f"shard {index}/{count} is out of range")
+    return index, count
+
+
+def shard(configs: list[Config], index: int, count: int) -> list[Config]:
+    """Contiguous slice `index` of `count`.
+
+    Contiguous rather than strided so a shard is a readable block of the matrix,
+    and so adding a config shifts one shard instead of moving every one.
+    """
+    start = len(configs) * index // count
+    end = len(configs) * (index + 1) // count
+    return configs[start:end]
 
 
 def main(argv: list[str]) -> int:
@@ -516,6 +786,22 @@ def main(argv: list[str]) -> int:
     )
     parser.add_argument("--keep", action="store_true", help="keep the render directory")
     parser.add_argument("--out", help="render directory (implies --keep)")
+    parser.add_argument(
+        "--changed",
+        action="store_true",
+        help="only configs a changed path could affect (default: all)",
+    )
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="ignore the pass cache and render every selected config",
+    )
+    parser.add_argument(
+        "--shard",
+        type=parse_shard,
+        metavar="N/M",
+        help="render slice N of M selected configs (0-based), for a CI fan-out",
+    )
     args = parser.parse_args(argv)
 
     all_configs = configs()
@@ -532,6 +818,29 @@ def main(argv: list[str]) -> int:
             raise SystemExit(f"unknown config(s): {', '.join(unknown)}")
         selected = [cfg for cfg in all_configs if cfg.name in args.names]
 
+    fingerprint = template_fingerprint()
+    already_passed = {} if args.full else cached_configs(fingerprint)
+    if args.changed:
+        selected = changed_configs(selected)
+        if not selected:
+            print("=== no changed path reaches a config; nothing to render ===")
+            return 0
+    if args.shard:
+        index, count = args.shard
+        whole = selected
+        selected = shard(selected, index, count)
+        print(
+            f"shard {index}/{count}: {len(selected)} of {len(whole)} selected config(s)"
+        )
+        if not selected:
+            # A shard with no work is a fan-out bug, not a pass.
+            print(f"=== shard {index}/{count} is empty ===")
+            return 1
+    skipped = [cfg for cfg in selected if cfg.name in already_passed]
+    selected = [cfg for cfg in selected if cfg.name not in already_passed]
+    if skipped:
+        print(f"cached {len(skipped)} config(s) already passing this template")
+
     copier = copier_binary()
     keep = args.keep or bool(args.out)
     out_dir = (
@@ -547,30 +856,46 @@ def main(argv: list[str]) -> int:
         failures += 1
         print("FAIL detect-coverage")
         print(f"     {problem}")
+    if any(cfg.adopt for cfg in selected):
+        prepare_snapshot(out_dir)
+    results: dict[str, list[str]] = {}
     try:
-        # Each config renders into its own directory, so the matrix is
-        # independent work; the render dominates the runtime.
-        with concurrent.futures.ThreadPoolExecutor(
-            max_workers=min(8, len(selected) or 1)
-        ) as pool:
-            results = list(pool.map(lambda c: run_config(copier, c, out_dir), selected))
-        for cfg, problems in zip(selected, results, strict=True):
-            if problems:
-                failures += 1
-                print(f"FAIL {cfg.name}")
-                for problem in problems:
-                    print(f"     {problem}")
-            else:
-                print(f"ok   {cfg.name}")
+        if selected:
+            # Each config renders into its own directory, so the matrix is
+            # independent work and the render dominates the runtime. Two workers
+            # per core measured fastest: past that the renders contend without
+            # gaining anything, and a host already busy makes it worse.
+            workers = max((os.cpu_count() or 1) * 2, 4)
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=min(workers, len(selected))
+            ) as pool:
+                results = dict(
+                    pool.map(
+                        lambda c: (c.name, run_config(copier, c, out_dir)), selected
+                    )
+                )
     finally:
         if not keep:
             shutil.rmtree(out_dir, ignore_errors=True)
 
+    if not args.changed:
+        remember(fingerprint, {**already_passed, **results})
+    for name, problems in results.items():
+        if problems:
+            failures += 1
+            print(f"FAIL {name}")
+            for problem in problems:
+                print(f"     {problem}")
+        else:
+            print(f"ok   {name}")
+
     print()
     if failures:
-        print(f"=== {failures} of {len(selected)} configs failed ===")
+        print(
+            f"=== {failures} of {len(results)} configs failed, {len(skipped)} cached ==="
+        )
         return 1
-    print(f"=== all {len(selected)} configs passed ===")
+    print(f"=== {len(results)} configs passed, {len(skipped)} cached ===")
     if keep:
         print(f"renders: {out_dir}")
     return 0

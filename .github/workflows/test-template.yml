@@ -6,20 +6,80 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+env:
+  # One definition of the matrix width, so the fan-out and the job count
+  # cannot drift apart.
+  SHARDS: "4"
+  TOOLCHAIN: copier>=9.0.0 jinja2-time>=0.2.0 pyyaml>=6.0.0
 jobs:
-  render:
+  toolchain:
+    # Installed once and handed to every shard. Four independent installs would
+    # pay the pip cost four times and could resolve different versions, which
+    # would let the shards disagree about what they tested.
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Build the tool prefix
+        run: |
+          python -m venv "$RUNNER_TEMP/tool"
+          "$RUNNER_TEMP/tool/bin/pip" install --quiet \
+            --disable-pip-version-check $TOOLCHAIN
+      - name: Prove the toolchain loads the template's extensions
+        # A broken toolchain must fail here, not as thirty render errors that
+        # each blame the template.
+        run: |
+          copier --version
+          python -c "import jinja2_time, yaml"
+        env:
+          PATH: ${{ runner.temp }}/tool/bin:${{ env.PATH }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: toolchain
+          path: ${{ runner.temp }}/tool
+          include-hidden-files: true
+          retention-days: 1
+  render:
+    needs: toolchain
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    name: render shard ${{ matrix.shard }}
+    steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install copier with the jinja2_time extension
-        run: pipx install "copier>=9" && pipx inject copier jinja2-time pyyaml
-      - name: Verify copier can load jinja2_time
+      - uses: actions/download-artifact@v4
+        with:
+          name: toolchain
+          path: ${{ runner.temp }}/tool
+      - name: Restore the npx cache
+        # @tasks-md/lint is resolved once per render directory, so the download
+        # repeats. The cache only saves that download: a miss costs time, never
+        # correctness, which is why it is not keyed on the template.
+        #
+        # npm_global_cache is the directory `npx` unpacks into. It is not
+        # ~/.npm: npm follows the XDG base directory spec, so the real path is
+        # ~/.cache/npm/_npx on a runner with XDG_CACHE_HOME set, and hardcoding
+        # either location makes the cache silently miss.
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.npm_global_cache }}/_npx
+          key: npx-tasks-md-lint-${{ runner.os }}
+      - name: Render shard ${{ matrix.shard }}
+        # --full because a CI job has no history to cache: the pass cache is
+        # per-machine and a fresh runner would hit it exactly never.
+        env:
+          PATH: ${{ runner.temp }}/tool/bin:${{ env.PATH }}
         run: |
-          copier copy --pretend --defaults --trust . /tmp/probe \
-            --data repo_name=probe --data 'languages=[]' \
-            --data ci_provider=none --data use_precommit=false
-      - name: Render every config
-        run: python3 scripts/test_template.py
+          chmod +x "$RUNNER_TEMP/tool/bin/"*
+          python scripts/test_template.py --full \
+            --shard "${{ matrix.shard }}/$SHARDS"
