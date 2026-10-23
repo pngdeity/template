@@ -9,7 +9,6 @@ _skip_if_exists:
   - CONTRIBUTING.md
   - CODEOWNERS # active only when use_codeowners: true
   - TASKS.md
-  - package.json
   - .env
   - "**/.gitkeep"
 _exclude:
@@ -91,11 +90,9 @@ _message_after_update: |
   {% if use_precommit %}
   Re-run: pre-commit install
   {% endif %}
-  {% if has_node %}
-  package.json is in _skip_if_exists and was not modified.
-  {% if is_node_library %}
-  Merge the publish fields (exports, files, publishConfig, repository) from this
-  template by hand, or the package stays private.
+  {% if has_node and _copier_operation == 'update' %}
+  package.json was overwritten from the template. Re-apply anything you added by
+  hand (extra scripts, dependencies) and commit the result.
   {% endif %}
   {% endif %}
 repo_name:

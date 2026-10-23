@@ -36,16 +36,21 @@ A Node or TypeScript project answers four independent questions at scaffold
 time. They are deliberately separate: a project may install with one tool, test
 with another, and never build at all.
 
-| Question               | Choices                      | Governance                                                          |
-| ---------------------- | ---------------------------- | ------------------------------------------------------------------- |
-| `node_package_manager` | `npm`, `pnpm`, `yarn`, `bun` | Install commands, lockfile handling, `setup-node.jinja`             |
-| `node_runtime`         | `node`, `deno`               | Test runner in `package.json`; whether `package.json` exists at all |
-| `node_build`           | `none`, `tsc`, `tsup`        | `tsconfig.json` presence and emit settings                          |
-| `node_lint`            | `deno`, `biome`              | Pre-commit hooks, CI lint step                                      |
+| Question               | Choices                            | Governance                                                          |
+| ---------------------- | ---------------------------------- | ------------------------------------------------------------------- |
+| `node_package_manager` | `npm`, `pnpm`, `yarn`, `bun`       | Install commands, lockfile handling, `setup-node.jinja`             |
+| `node_runtime`         | `node`, `bun`, `deno`              | Test runner in `package.json`; whether `package.json` exists at all |
+| `node_purpose`         | `application`, `library`, `plugin` | `private`, `exports`, `files`, publish workflow presence            |
+| `node_build`           | `none`, `tsc`, `tsup`              | `tsconfig.json` presence and emit settings                          |
+| `node_lint`            | `deno`, `biome`                    | Pre-commit hooks, CI lint step                                      |
 
 `node_purpose` and `node_build` are not asked when the runtime is `deno`: a Deno
 project has no compiler config to choose and cannot be an npm library. That
 constraint is what keeps the reachable matrix small enough to verify.
+
+`node_lint: deno` is refused when the package manager is `bun` or `pnpm`: those
+installers lay out `node_modules` differently from npm, so deno cannot resolve
+the tree it is asked to lint.
 
 Consequences worth knowing:
 
@@ -74,8 +79,20 @@ Consequences worth knowing:
 there is no `NPM_TOKEN` to store, but the package must be registered as a
 trusted publisher on npmjs.com before the first tag push.
 
-`package.json` is in `_skip_if_exists`, so `copier update` will not rewrite it in
-an existing project. Merge new publish fields by hand.
+`package.json` is not in `_skip_if_exists`: `copier update` regenerates it from
+the answers like any other derived file, so the Node answers always describe the
+manifest on disk. Anything the adopter added by hand — extra scripts, extra
+dependencies — is lost on update and must be re-applied. The post-update message
+says so. This is deliberate: a manifest that silently disagrees with
+`node_runtime`, `node_purpose` and `node_build` is worse than one that has to be
+merged.
+
+`plugin` is the third purpose. It emits no `"."` export by default: OpenCode
+resolves `<package>/server` and `<package>/tui` by entrypoint name, so a plugin
+whose manifest exports only a root has no loadable entrypoint. With a build the
+entrypoints are one-line root shims re-exporting `dist/`; without one they point
+at the `.ts` sources directly, which is the shape OpenCode documents and its
+loader resolves.
 
 ## Staying current with the template
 

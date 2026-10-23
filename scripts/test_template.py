@@ -62,6 +62,8 @@ JINJA_ALLOWED = (".github/workflows", ".terraform-docs.yml")
 class Config:
     name: str
     data: dict[str, str] = field(default_factory=dict)
+    # Adopt an existing project and update it, instead of a fresh copy.
+    adopt: bool = False
 
 
 LANGUAGES = "languages"
@@ -197,6 +199,15 @@ def configs() -> list[Config]:
                 "include_contributing": "true",
                 "include_security": "true",
             },
+        ),
+        # --- Adoption ---------------------------------------------------------
+        # `package.json` used to be in `_skip_if_exists`, so an adopted project
+        # kept its own manifest while every other file followed the template's
+        # Node answers. This config proves the manifest is regenerated.
+        Config(
+            "adopt-node",
+            {LANGUAGES: "[typescript]", "node_purpose": "library"},
+            adopt=True,
         ),
     ]
 
@@ -345,9 +356,104 @@ def check_audit(dest: Path, problems: list[str]) -> str:
     return last
 
 
+def check_manifest_overwritten(dest: Path, problems: list[str]) -> None:
+    # `copier update` must regenerate package.json: a manifest that keeps the
+    # adopter's values while the rest of the tree follows the template's Node
+    # answers disagrees with itself, silently.
+    manifest = dest / "package.json"
+    if not manifest.exists():
+        return
+    data = json.loads(manifest.read_text())
+    if "leftover-key" in data:
+        problems.append("package.json kept the adopter's hand-written keys")
+    if not data.get("exports"):
+        problems.append("package.json is missing the template's exports block")
+
+
+def git(dest: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.name=matrix",
+            "-c",
+            "user.email=matrix@example.com",
+            *args,
+        ],
+        cwd=dest,
+        capture_output=True,
+        text=True,
+    )
+
+
+def adopt(copier: str, cfg: Config, dest: Path) -> tuple[bool, str]:
+    # Prove the update path, not just the copy path: adopt a project that
+    # already has its own package.json, then update it from the template.
+    dest.mkdir(parents=True, exist_ok=True)
+    (dest / "package.json").write_text(
+        json.dumps({"name": "hand-written", "leftover-key": True}, indent=2) + "\n"
+    )
+    (dest / "README.md").write_text("# Hand written\n")
+    data_args: list[str] = []
+    for key, value in cfg.data.items():
+        data_args += ["--data", f"{key}={value}"]
+    proc = subprocess.run(
+        [
+            copier,
+            "copy",
+            "--trust",
+            "--defaults",
+            "--force",
+            "--overwrite",
+            "--quiet",
+            # Without this Copier renders the last git tag, not the working tree.
+            "--vcs-ref",
+            "HEAD",
+            str(TEMPLATE),
+            str(dest),
+            *data_args,
+            "--data",
+            "use_precommit=false",
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        return False, (proc.stdout + proc.stderr).strip()
+    # `update` refuses a dirty destination, and it replays the recorded
+    # `_commit` — a revision no clone can resolve after a copy from a dirty
+    # working tree. Rewrite it to the tag both sides agree on, and commit that
+    # before updating so the tree is clean.
+    answers = dest / ".copier-answers.yml"
+    answers.write_text(
+        "\n".join(
+            "_commit: v1.0.0" if line.startswith("_commit:") else line
+            for line in answers.read_text().splitlines()
+        )
+        + "\n"
+    )
+    for args in (("add", "-A"), ("commit", "-q", "-m", "adopted")):
+        result = git(dest, *args)
+        if result.returncode != 0:
+            return False, (result.stdout + result.stderr).strip()
+    proc = subprocess.run(
+        [copier, "update", "--trust", "--defaults", "--quiet"],
+        cwd=dest,
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        return False, (proc.stdout + proc.stderr).strip()
+    return True, ""
+
+
 def run_config(copier: str, cfg: Config, out_dir: Path) -> list[str]:
     dest = out_dir / cfg.name
-    ok, log = render(copier, cfg, dest)
+    if cfg.adopt:
+        ok, log = adopt(copier, cfg, dest)
+    else:
+        ok, log = render(copier, cfg, dest)
     if not ok:
         tail = "\n".join(log.splitlines()[-6:])
         return [f"render failed:\n{tail}"]
@@ -357,6 +463,8 @@ def run_config(copier: str, cfg: Config, out_dir: Path) -> list[str]:
     check_yaml(dest, problems)
     check_jinja(dest, problems)
     check_blank_lines(dest, problems)
+    if cfg.adopt:
+        check_manifest_overwritten(dest, problems)
     check_lint(dest, problems)
     check_audit(dest, problems)
     return problems
