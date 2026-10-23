@@ -100,6 +100,35 @@ def configs() -> list[Config]:
                 "node_lint": "biome",
             },
         ),
+        Config(
+            "ts-plugin-src",
+            {
+                **ts,
+                "node_purpose": "plugin",
+                "node_runtime": "bun",
+                "node_package_manager": "bun",
+                "node_lint": "biome",
+            },
+        ),
+        Config(
+            "ts-plugin-tsc",
+            {
+                **ts,
+                "node_purpose": "plugin",
+                "node_build": "tsc",
+                "node_package_manager": "pnpm",
+                "node_lint": "biome",
+            },
+        ),
+        Config(
+            "ts-plugin-tsup",
+            {
+                **ts,
+                "node_purpose": "plugin",
+                "node_build": "tsup",
+                "node_package_manager": "yarn",
+            },
+        ),
         # --- Other languages --------------------------------------------------
         Config("py-app", py),
         Config("py-tool", {**py, "python_scaffolding": "tooling"}),

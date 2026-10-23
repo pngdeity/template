@@ -233,6 +233,9 @@ node_purpose:
     - - library
       - value: library
         validator: "{{ 'a Deno project has no package.json, so it cannot publish to npm' if node_runtime == 'deno' else '' }}"
+    - - plugin
+      - value: plugin
+        validator: "{{ 'an OpenCode plugin is loaded from a package.json entrypoint, which Deno does not produce — select none or a package manager runtime' if node_runtime == 'deno' else '' }}"
   default: application
   when: "{{ has_node }}"
 node_build:
@@ -333,6 +336,17 @@ apm_packages:
 is_node_library:
   type: bool
   default: "{{ has_node and node_purpose == 'library' and node_runtime != 'deno' }}"
+  when: false
+# Whether the package is a published, loadable artefact rather than a private
+# app. A plugin is a library with a different entrypoint contract, so every
+# branch that asks "is this published?" should ask this, not is_node_library.
+is_node_publishable:
+  type: bool
+  default: "{{ has_node and node_purpose in ('library', 'plugin') and node_runtime != 'deno' }}"
+  when: false
+is_node_plugin:
+  type: bool
+  default: "{{ has_node and node_purpose == 'plugin' and node_runtime != 'deno' }}"
   when: false
 has_node_build:
   type: bool

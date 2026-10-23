@@ -3,10 +3,14 @@
 {% if license_type == 'proprietary' %}{% set npm_license = 'UNLICENSED' %}{% endif %}
 {% set gh_slug = github_username if github_username else (author_name | lower | replace(' ', '-')) %}
 {% if not gh_slug %}{% set gh_slug = 'OWNER-CHANGEME' %}{% endif %}
+{% set build_entry = 'dist/index.js' %}
+{% set build_index = 'dist/index.d.ts' %}
 {
   "name": "{{ repo_name }}",
   "version": "0.1.0",
 {% if is_node_library %}
+  "private": false,
+{% elif is_node_plugin %}
   "private": false,
 {% else %}
   "private": true,
@@ -14,7 +18,45 @@
   "type": "module",
   "description": "{{ repo_description }}",
   "license": "{{ npm_license }}",
-{% if is_node_library %}
+{% if is_node_plugin %}
+  "sideEffects": false,
+{% if node_build == 'none' %}
+  "files": [
+    "server.ts",
+    "tui.ts",
+    "src",
+    "!**/*.test.ts"
+  ],
+  "exports": {
+    "./server": "./server.ts",
+    "./tui": "./tui.ts"
+  },
+  "engines": {
+    "node": ">={{ node_version }}",
+    "opencode": ">=2.0.0"
+  },
+{% else %}
+  "files": [
+    "server.js",
+    "tui.js",
+    "dist"
+  ],
+  "main": "./{{ build_entry }}",
+  "types": "./{{ build_index }}",
+  "exports": {
+    ".": {
+      "types": "./{{ build_index }}",
+      "import": "./{{ build_entry }}"
+    },
+    "./server": "./server.js",
+    "./tui": "./tui.js"
+  },
+  "engines": {
+    "node": ">={{ node_version }}",
+    "opencode": ">=2.0.0"
+  },
+{% endif %}
+{% elif is_node_library %}
   "sideEffects": false,
 {% if node_build == 'none' %}
   "files": [
@@ -59,7 +101,7 @@
   "scripts": {
     "test": "{{ node_test_runner }}"{% if has_node_build %},
     "build": "{{ node_build_cmd }}",
-    "typecheck": "tsc --noEmit"{% endif %}{% if is_node_library %},
+    "typecheck": "tsc --noEmit"{% endif %}{% if is_node_publishable %},
     "prepack": "{% if has_node_build %}{{ node_build_cmd }} && {% endif %}{{ node_test_cmd }}"{% endif %}
   }{% if node_lint == 'biome' %},
   "devDependencies": {
@@ -69,5 +111,6 @@
   "devDependencies": {
     "typescript": "^5.9.0"{% if node_build == 'tsup' %},
     "tsup": "^8.0.0"{% endif %}
-  }{% endif %}
+  }{% endif %}{{ '' }}
 }
+
