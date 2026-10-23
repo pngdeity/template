@@ -13,10 +13,8 @@
 ## Development Setup
 
 {% include 'template/_partials/prerequisites.jinja' %}{% if has_tofu %}
-{% include 'template/_partials/tofu-layers.jinja' %}
-{% endif %}
-
-## Pull Request Requirements
+{% include 'template/_partials/tofu-layers.jinja' %}{% else %}
+{% endif %}## Pull Request Requirements
 
 {% if use_commitizen %}{% include 'template/_partials/conventional-commits.jinja' %}
 {% endif %}
