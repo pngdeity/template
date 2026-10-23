@@ -66,7 +66,8 @@
   "types": "./src/index.ts",
 {% else %}
   "files": [
-    "dist"
+    "dist",
+    "!**/*.test.ts"
   ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -80,7 +81,16 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
 {% endif %}
-    }
+    }{% for sub in node_subpath_exports or [] %},
+    "./{{ sub | trim }}": {
+{% if node_build == 'none' %}
+      "types": "./src/{{ sub | trim }}.ts",
+      "import": "./src/{{ sub | trim }}.ts"
+{% else %}
+      "types": "./dist/{{ sub | trim }}.d.ts",
+      "import": "./dist/{{ sub | trim }}.js"
+{% endif %}
+    }{% endfor %}{{ '' }}
   },
   "engines": {
     "node": ">={{ node_version }}"

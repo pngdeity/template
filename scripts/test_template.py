@@ -76,6 +76,14 @@ def configs() -> list[Config]:
         Config("ts-def", ts),
         Config("ts-tsc-lib", {**ts, "node_purpose": "library", "node_build": "tsc"}),
         Config("ts-tsup-lib", {**ts, "node_purpose": "library", "node_build": "tsup"}),
+        Config(
+            "ts-subpaths",
+            {
+                **ts,
+                "node_purpose": "library",
+                "node_subpath_exports": "[core, descriptors]",
+            },
+        ),
         Config("ts-tsc-app", {**ts, "node_build": "tsc"}),
         Config("ts-deno", {**ts, "node_runtime": "deno"}),
         Config("js-def", js),
