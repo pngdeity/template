@@ -24,19 +24,35 @@
 
 ## P0
 
-- [ ] Create `scripts/test_template.py` — render matrix as a repo script
-  - **ID**: test-harness
+- [ ] Run the render matrix in CI on every push and pull request (@opencode)
+  - **ID**: ci-test-template
   - **Tags**: tooling, ci
-  - **Details**: The 18-config render matrix currently lives in
-    `/tmp/opencode/matrix.sh`, which is scratch and disappears. It is the only
-    thing that verifies a template change; it belongs in the repo.
-  - **Acceptance**: `scripts/test_template.py` renders every config, asserts
-    audit Grade A, `@tasks-md/lint` zero errors and no double blank lines, and
-    exits non-zero on any failure.
+  - **Hypothesis**: `scripts/test_template.py` verifies every template change,
+    but nothing runs it automatically, so a change is only as verified as the
+    author's memory. The harness exists and passes 22 configs; the gap is that
+    a regression reaches `main` without a render ever happening.
+  - **Success**: A workflow renders all 22 configs on push to `main` and on
+    every pull request, fails the check on any render failure, audit grade
+    below A, `@tasks-md/lint` error, or double blank line, and completes in
+    under five minutes using a cached Copier install.
+  - **Pivot**: If provisioning Copier with `jinja2_time` in Actions cannot be
+    made reliable, run only the JSON/YAML/Jinja structural checks in CI and
+    record that the Copier invocation stays local.
+  - **Measurement**: `git push` to a scratch branch with a deliberately broken
+    partial, asserting the workflow fails; then revert and asserting it passes.
+  - **Anchor**: `copier.yml` `_jinja_extensions` lists `jinja2_time`, which the
+    system Copier cannot load, so the workflow must install Copier the same way
+    the harness probes for it.
+  - **Details**: This workflow is for the template repository itself, so it is
+    a root-level file under `.github/workflows/` and is never rendered into
+    generated projects (the same rule that keeps `scripts/test_template.py` out
+    of `template/`).
+  - **Acceptance**: The workflow exists, runs the harness unmodified, and its
+    status is visible on the repository's default branch.
   - **Verification**: `python3 scripts/test_template.py`
-  - **Files**: `scripts/test_template.py`
-  - **Touches**: `scripts/`
-  - **Estimate**: 3h
+  - **Files**: `.github/workflows/test-template.yml`
+  - **Touches**: `.github/`
+  - **Estimate**: 1h
 
 - [ ] Generate `.github/dependabot.yml.jinja` — automated dependency updates per ecosystem
   - **ID**: ci-dependabot

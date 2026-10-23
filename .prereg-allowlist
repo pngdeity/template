@@ -5,7 +5,6 @@
 # New tasks should satisfy the gate rather than be added here.
 ci-dependabot
 ci-templates
-test-harness
 docs-skip-if-exists
 docs-migrations
 detect-coverage
