@@ -22,35 +22,6 @@
 <!-- policy: Every template change is verified by a render, not by reading.
      policy: Prefer fixing root causes over symptoms. -->
 
-## P0
-
-- [ ] Generate `.github/dependabot.yml.jinja` — automated dependency updates per ecosystem
-  - **ID**: ci-dependabot
-  - **Tags**: ci, templates
-  - **Details**: Generated projects get every other CI workflow but no
-    Dependabot config, so dependency updates are manual. The ecosystems are the
-    selected languages plus `github-actions`.
-  - **Acceptance**: A rendered project with `ci_provider: github` contains
-    `.github/dependabot.yml` with one `updates` entry per selected ecosystem,
-    and the file is valid YAML.
-  - **Verification**: `python3 scripts/test_template.py`
-  - **Files**: `template/{% if ci_provider == 'github' %}.github{% endif %}/dependabot.yml.jinja`, `template/scripts/audit.py.jinja`
-  - **Touches**: `template/{% if ci_provider == 'github' %}.github{% endif %}/`
-  - **Estimate**: 2h
-
-- [ ] Generate issue and pull-request templates
-  - **ID**: ci-templates
-  - **Tags**: ci, templates
-  - **Details**: `.github/ISSUE_TEMPLATE/bug_report.yml`,
-    `feature_request.yml` and `PULL_REQUEST_TEMPLATE.md` are the last pieces of
-    the GitHub surface the template does not scaffold.
-  - **Acceptance**: Rendered under `ci_provider: github`, all three files
-    exist and parse as YAML or Markdown respectively.
-  - **Verification**: `python3 scripts/test_template.py`
-  - **Files**: `template/{% if ci_provider == 'github' %}.github{% endif %}/ISSUE_TEMPLATE/`
-  - **Touches**: `template/{% if ci_provider == 'github' %}.github{% endif %}/`
-  - **Estimate**: 2h
-
 ## P1
 
 - [ ] Document `_skip_if_exists` entries in `copier.yml` with inline comments

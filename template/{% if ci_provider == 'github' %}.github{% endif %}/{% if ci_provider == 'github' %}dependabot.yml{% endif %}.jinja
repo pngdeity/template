@@ -1,0 +1,58 @@
+# Dependency updates are proposed by Dependabot, never merged automatically.
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "ci"
+{% if has_python %}
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "build"
+{% endif %}
+{% if has_node %}
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "build"
+{% endif %}
+{% if has_go %}
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "build"
+{% endif %}
+{% if has_rust %}
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "build"
+{% endif %}
+{% if has_dotnet %}
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "build"
+{% endif %}
+{% if has_tofu %}
+  - package-ecosystem: terraform
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "build"
+{% endif %}

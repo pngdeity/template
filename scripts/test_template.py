@@ -350,6 +350,10 @@ def check_audit(dest: Path, problems: list[str]) -> str:
         text=True,
     )
     out = (proc.stdout + proc.stderr).strip()
+    missing = [line.strip() for line in out.splitlines() if "Missing CI config" in line]
+    if missing:
+        # A repository cannot be told it owns files the template deleted.
+        problems.append(f"audit expects unrendered files: {missing[0]}")
     last = out.splitlines()[-1] if out else ""
     if "Grade: A" not in last:
         problems.append(f"audit did not report Grade A: {last or 'no output'}")
