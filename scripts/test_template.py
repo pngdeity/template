@@ -26,6 +26,7 @@ Exit status is non-zero if any check fails.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import json
 import shutil
 import subprocess
@@ -213,6 +214,19 @@ def configs() -> list[Config]:
     ]
 
 
+def lint_command() -> list[str]:
+    # npx re-resolves the package for every render's directory, which is the
+    # slowest part of a render that is otherwise clean. Prefer a binary npx
+    # has already unpacked.
+    found = shutil.which("tasks-lint")
+    if found:
+        return [found]
+    for cache in (Path.home() / ".cache/npm/_npx", Path.home() / ".npm/_npx"):
+        for candidate in cache.glob("*/node_modules/.bin/tasks-lint"):
+            return [str(candidate)]
+    return ["npx", "--yes", "@tasks-md/lint"]
+
+
 def copier_binary() -> str:
     # The system copier cannot load this template's jinja2_time extension, so
     # probe each candidate before trusting it.
@@ -220,35 +234,17 @@ def copier_binary() -> str:
     for candidate in candidates:
         if not candidate or not Path(candidate).exists():
             continue
-        probe = subprocess.run([candidate, "--version"], capture_output=True, text=True)
-        if probe.returncode != 0:
+        # The extension is imported from the copier script's own interpreter,
+        # so asking that interpreter costs one process instead of two.
+        interpreter = Path(candidate).with_name("python")
+        if not interpreter.exists():
             continue
         check = subprocess.run(
-            [
-                candidate,
-                "copy",
-                "--trust",
-                "--defaults",
-                "--quiet",
-                "--vcs-ref",
-                "HEAD",
-                "--pretend",
-                str(TEMPLATE),
-                str(Path(tempfile.gettempdir()) / "copier-probe"),
-                "--data",
-                "repo_name=probe",
-                "--data",
-                "languages=[]",
-                "--data",
-                "ci_provider=none",
-                "--data",
-                "use_precommit=false",
-            ],
-            cwd=REPO_ROOT,
+            [str(interpreter), "-c", "import jinja2_time"],
             capture_output=True,
             text=True,
         )
-        if "jinja2_time" not in check.stderr:
+        if check.returncode == 0:
             return candidate
     raise SystemExit(
         "no copier with the jinja2_time extension found; install it with "
@@ -348,7 +344,7 @@ def check_usage_placeholder(dest: Path, problems: list[str]) -> None:
 
 def check_lint(dest: Path, problems: list[str]) -> str:
     proc = subprocess.run(
-        ["npx", "--yes", "@tasks-md/lint", "TASKS.md"],
+        [*lint_command(), "TASKS.md"],
         cwd=dest,
         capture_output=True,
         text=True,
@@ -552,8 +548,13 @@ def main(argv: list[str]) -> int:
         print("FAIL detect-coverage")
         print(f"     {problem}")
     try:
-        for cfg in selected:
-            problems = run_config(copier, cfg, out_dir)
+        # Each config renders into its own directory, so the matrix is
+        # independent work; the render dominates the runtime.
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=min(8, len(selected) or 1)
+        ) as pool:
+            results = list(pool.map(lambda c: run_config(copier, c, out_dir), selected))
+        for cfg, problems in zip(selected, results, strict=True):
             if problems:
                 failures += 1
                 print(f"FAIL {cfg.name}")

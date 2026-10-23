@@ -40,4 +40,4 @@ copier adopt gh:pngdeity/template /path/to/existing-project
 
 ## License
 
-MIT
+Apache-2.0

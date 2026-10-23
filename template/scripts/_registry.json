@@ -13,7 +13,14 @@
   },
   "nested_language_runtime": {
     "typescript": ["package.json", "tsconfig.json"],
-    "python": ["pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", "Pipfile", "package.json"]
+    "python": [
+      "pyproject.toml",
+      "setup.py",
+      "setup.cfg",
+      "requirements.txt",
+      "Pipfile",
+      "package.json"
+    ]
   },
   "ci_markers": {
     "github": [".github/workflows"]
@@ -36,6 +43,7 @@
     "author_email": "same as author_name; not stated by any tracked file",
     "github_username": "read from the git remote, which is absent in a fresh clone's sibling directory",
     "license_type": "LICENSE holds the resolved text, not an identifier, so MIT and ISC cannot be told apart reliably",
+    "copyright_year": "the year in LICENSE is the adopter's provenance, not a property of the tree; an adopted project's first year cannot be inferred from file mtimes",
     "tofu_context": "app and org layouts share the same filenames; only intent distinguishes them",
     "go_scaffolding": "application and tooling share go.mod; cmd/ presence is a weak proxy and the wrong default is costly",
     "go_module_path": "written in go.mod, but reading it back is ambiguous once go_module_path has been rewritten",
