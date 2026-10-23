@@ -55,6 +55,7 @@
     "fork_upstream_branch": "follows fork_upstream and has no marker of its own",
     "codeowners_maintainers": "CODEOWNERS records handles, but not which of them are maintainers versus reviewers",
     "codeowners_frontend": "a CODEOWNERS entry exists only after generation, so adopting cannot read it back",
-    "codeowners_devops": "same as codeowners_frontend"
+    "codeowners_devops": "same as codeowners_frontend",
+    "go_toolchain": "go.mod's toolchain line pins a compiler the template cannot infer from the tree; an existing line is the adopter's decision about their own CI"
   }
 }

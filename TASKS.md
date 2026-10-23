@@ -24,42 +24,4 @@
 
 ## P2
 
-- [ ] Non-Go task runner partials (Taskfile for Python, Node, Rust)
-  - **ID**: taskfile-others
-  - **Tags**: templates, tooling
-  - **Details**: `_partials/taskfile-go.jinja` exists but has no counterpart,
-    so only Go projects get a task runner.
-  - **Acceptance**: A rendered Python, Node and Rust project each contains a
-    `Taskfile.yml` whose targets match that language's commands.
-  - **Verification**: `python3 scripts/test_template.py`
-  - **Files**: `template/_partials/`
-  - **Touches**: `template/_partials/`
-  - **Estimate**: 3h
-
 ## P3
-
-- [ ] Add a `toolchain` directive question to `go.mod`
-  - **ID**: go-toolchain
-  - **Tags**: go
-  - **Details**: Go 1.21+ supports `toolchain`, which pins the compiler
-    independently of the language version. The template neither emits it nor
-    offers it.
-  - **Acceptance**: With the new question set, `go.mod` contains a `toolchain`
-    line; with it unset, `go.mod` is byte-identical to today's output.
-  - **Verification**: `python3 scripts/test_template.py`
-  - **Files**: `template/{% if has_go %}go.mod{% endif %}.jinja`, `copier.yml`
-  - **Touches**: `template/{% if has_go %}go.mod{% endif %}.jinja`, `copier.yml`
-  - **Estimate**: 1h
-
-- [ ] SHA-pin all GitHub Actions in the generated workflows
-  - **ID**: ci-pin-actions
-  - **Tags**: ci, security
-  - **Details**: Workflows reference `@v4`/`@v5` tags, which are mutable. Pinning
-    commit SHAs is the supply-chain-hardened form; the trade-off is that updates
-    must be mechanical.
-  - **Acceptance**: Every `uses:` line in every rendered workflow references a
-    40-character commit SHA with the version in a trailing comment.
-  - **Verification**: `python3 scripts/test_template.py`
-  - **Files**: `template/{% if ci_provider == 'github' %}.github{% endif %}/workflows/`
-  - **Touches**: `template/{% if ci_provider == 'github' %}.github{% endif %}/workflows/`
-  - **Estimate**: 2h

@@ -1,3 +1,6 @@
 module {{ go_module_path }}
 
 go {{ go_directive }}
+{% if go_toolchain %}
+toolchain {{ go_toolchain }}
+{% endif %}

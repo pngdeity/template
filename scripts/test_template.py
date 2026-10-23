@@ -156,6 +156,7 @@ def configs() -> list[Config]:
         Config("py-app", py),
         Config("py-tool", {**py, "python_scaffolding": "tooling"}),
         Config("go-app", {LANGUAGES: "[go]"}),
+        Config("go-toolchain", {LANGUAGES: "[go]", "go_toolchain": "go1.26.0"}),
         Config("rust", {LANGUAGES: "[rust]"}),
         Config("dotnet", {LANGUAGES: "[dotnet]"}),
         Config("tofu-app", {LANGUAGES: "[tofu]", "tofu_context": "app"}),

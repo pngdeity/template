@@ -461,6 +461,12 @@ copyright_year:
   type: str
   default: "{% now 'utc', '%Y' %}"
   when: false
+go_toolchain:
+  type: str
+  help: >-
+    Compiler toolchain pinned in go.mod (e.g. go1.26.0). Leave empty to emit no toolchain line and let the installed Go decide.
+  default: ""
+  when: "{{ has_go }}"
 go_directive:
   type: str
   default: "1.26"
