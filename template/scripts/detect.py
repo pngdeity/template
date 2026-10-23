@@ -14,6 +14,38 @@ def _load_registry():
         return json.load(f)
 
 
+COPIER_YML = os.path.join(
+    os.path.dirname(os.path.dirname(_SCRIPT_DIR)), "copier.yml"
+)
+
+
+def detectable_questions(registry):
+    """Question names this registry can answer, read from copier.yml itself.
+
+    Reading the questions rather than hard-coding them means a question added
+    later without a marker fails the check below instead of going unnoticed.
+    Only questions a user answers are considered: `when: false` marks a
+    computed variable, and listing one would override its derivation. Choices
+    (languages, ci_provider) are answered by their own marker tables.
+    """
+    import yaml
+
+    with open(COPIER_YML) as f:
+        config = yaml.safe_load(f)
+    questions = []
+    for name, spec in config.items():
+        if name.startswith("_") or not isinstance(spec, dict):
+            continue
+        if spec.get("when") is False:
+            continue
+        if name in ("languages", "ci_provider"):
+            continue
+        questions.append(name)
+    detectable = set(registry.get("tool_markers", {}))
+    detectable |= set(registry.get("undetectable", {}))
+    return [q for q in questions if q not in detectable]
+
+
 def _glob_match(repo_path, pattern):
     return bool(_glob.glob(os.path.join(repo_path, pattern), recursive=False))
 
@@ -92,7 +124,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Detect repo characteristics")
     parser.add_argument("repo_path", nargs="?", default=".")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument(
+        "--check-coverage",
+        action="store_true",
+        help="fail if a copier.yml question is neither detected nor listed as undetectable",
+    )
     args = parser.parse_args()
+    if args.check_coverage:
+        uncovered = detectable_questions(_load_registry())
+        if uncovered:
+            print("questions with no marker and no stated reason:")
+            for name in uncovered:
+                print(f"  - {name}")
+            raise SystemExit(1)
+        print("every question is detected or documented as undetectable")
+        raise SystemExit(0)
     result = detect(args.repo_path)
     if args.json:
         print(json.dumps(result))

@@ -13,14 +13,7 @@
   },
   "nested_language_runtime": {
     "typescript": ["package.json", "tsconfig.json"],
-    "python": [
-      "pyproject.toml",
-      "setup.py",
-      "setup.cfg",
-      "requirements.txt",
-      "Pipfile",
-      "package.json"
-    ]
+    "python": ["pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", "Pipfile", "package.json"]
   },
   "ci_markers": {
     "github": [".github/workflows"]
@@ -33,6 +26,35 @@
     "use_codeowners": ["CODEOWNERS"],
     "include_tasks_lint": [".github/workflows/tasks-lint.yml"],
     "include_annotation_gate": [".github/workflows/annotation-gate.yml"],
-    "use_apm": ["apm.yml"]
+    "use_apm": ["apm.yml"],
+    "use_devcontainer": [".devcontainer/devcontainer.json"]
+  },
+  "undetectable": {
+    "repo_name": "comes from the destination directory or the git remote, not a file marker",
+    "repo_description": "free prose; nothing in a tree states what a project is for",
+    "author_name": "the template's own defaults already name the maintainer, and a git config read would be a guess",
+    "author_email": "same as author_name; not stated by any tracked file",
+    "github_username": "read from the git remote, which is absent in a fresh clone's sibling directory",
+    "license_type": "LICENSE holds the resolved text, not an identifier, so MIT and ISC cannot be told apart reliably",
+    "tofu_context": "app and org layouts share the same filenames; only intent distinguishes them",
+    "go_scaffolding": "application and tooling share go.mod; cmd/ presence is a weak proxy and the wrong default is costly",
+    "go_module_path": "written in go.mod, but reading it back is ambiguous once go_module_path has been rewritten",
+    "dotnet_namespace": "derived from the .csproj filename only when one csproj exists, and the derivation is already the template's default",
+    "python_scaffolding": "application and tooling both carry pyproject.toml; src/ presence is not decisive",
+    "node_package_manager": "lockfile presence is decisive only when a lockfile is committed, which is not guaranteed",
+    "node_runtime": "package.json does not record which runtime executes it",
+    "node_purpose": "application, library and plugin share a manifest shape; only the exports intent separates them",
+    "node_build": "detectable only from devDependencies, which an adopter may not have installed yet",
+    "node_lint": "biome.json presence indicates biome, but its absence does not imply deno",
+    "node_subpath_exports": "the manifest records current exports, not which of them the adopter wants maintained",
+    "node_keywords": "free prose",
+    "node_peer_dependencies": "a peer block in an existing manifest is the adopter's, and copying it would assert a relationship the template cannot verify",
+    "use_commitizen": "leaves no tracked file that distinguishes it from other pre-commit tooling",
+    "use_prereg": "policy choice with no filesystem trace; the default false is the safe answer",
+    "fork_upstream": "the upstream remote is git config, absent from a directory copied without it",
+    "fork_upstream_branch": "follows fork_upstream and has no marker of its own",
+    "codeowners_maintainers": "CODEOWNERS records handles, but not which of them are maintainers versus reviewers",
+    "codeowners_frontend": "a CODEOWNERS entry exists only after generation, so adopting cannot read it back",
+    "codeowners_devops": "same as codeowners_frontend"
   }
 }

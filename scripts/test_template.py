@@ -491,6 +491,26 @@ def run_config(copier: str, cfg: Config, out_dir: Path) -> list[str]:
     return problems
 
 
+def check_detect_coverage(problems: list[str]) -> None:
+    # Runs once, not per render: the registry describes the template, and a
+    # question added without a marker or a stated reason is a gap in it.
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(REPO_ROOT / "template" / "scripts" / "detect.py"),
+            "--check-coverage",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        detail = (proc.stdout + proc.stderr).strip().splitlines()
+        problems.append(
+            "detect.py --check-coverage failed: "
+            + ("; ".join(line.strip() for line in detail[1:4]) or "no output")
+        )
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("names", nargs="*", help="config names to run (default: all)")
@@ -524,6 +544,12 @@ def main(argv: list[str]) -> int:
     )
 
     failures = 0
+    coverage_problems: list[str] = []
+    check_detect_coverage(coverage_problems)
+    for problem in coverage_problems:
+        failures += 1
+        print("FAIL detect-coverage")
+        print(f"     {problem}")
     try:
         for cfg in selected:
             problems = run_config(copier, cfg, out_dir)
