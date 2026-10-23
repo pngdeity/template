@@ -22,7 +22,7 @@ jobs:
       - uses: denoland/setup-deno@v2
       - run: deno fmt --check && deno lint
 {% else %}
-{% set node_setup_deno = (node_lint == 'deno') %}
+{% set node_setup_deno = (node_lint == 'deno' and node_runtime != 'bun') %}
 {% include 'template/_partials/node-ci-setup.jinja' %}
       - run: {{ node_lint_cmd }}
 {% if has_node_build %}

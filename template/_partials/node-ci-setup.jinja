@@ -1,3 +1,8 @@
+{% if uses_bun | default(false) %}
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+{% endif %}
 {% if not node_setup_provided | default(false) %}
       - uses: actions/setup-node@v4
         with:
@@ -10,9 +15,5 @@
       - uses: pnpm/action-setup@v4
 {% elif node_package_manager == 'yarn' %}
       - run: corepack enable
-{% elif node_package_manager == 'bun' %}
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
 {% endif %}
       - run: {{ node_install_cmd }}

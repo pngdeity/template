@@ -81,10 +81,25 @@ def configs() -> list[Config]:
         Config("js-def", js),
         Config("ts-biome", {**ts, "node_lint": "biome", "node_build": "tsc"}),
         Config(
-            "ts-pnpm", {**ts, "node_package_manager": "pnpm", "node_purpose": "library"}
+            "ts-pnpm",
+            {
+                **ts,
+                "node_package_manager": "pnpm",
+                "node_purpose": "library",
+                "node_lint": "biome",
+            },
         ),
         Config("ts-yarn", {**ts, "node_package_manager": "yarn", "node_build": "tsup"}),
-        Config("ts-bun", {**ts, "node_package_manager": "bun"}),
+        Config("ts-bun", {**ts, "node_package_manager": "bun", "node_lint": "biome"}),
+        Config(
+            "ts-bun-runtime",
+            {
+                **ts,
+                "node_runtime": "bun",
+                "node_package_manager": "bun",
+                "node_lint": "biome",
+            },
+        ),
         # --- Other languages --------------------------------------------------
         Config("py-app", py),
         Config("py-tool", {**py, "python_scaffolding": "tooling"}),
