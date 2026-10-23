@@ -24,6 +24,28 @@ jobs:
           package-manager-cache: false
 {% set node_setup_provided = true %}
 {% include 'template/_partials/node-ci-setup.jinja' %}
+{% if has_node_build %}
+      # A build that silently failed would publish a package whose declared
+      # entrypoints do not exist: OpenCode's installer sets
+      # ignoreScripts: true, so nothing a consumer runs will ever build this.
+      - name: Verify the built artefact exists
+        run: |
+          for f in $(node -e '
+            const p = require("./package.json");
+            const paths = new Set();
+            const walk = (v) => {
+              if (typeof v === "string") paths.add(v);
+              else if (v && typeof v === "object") Object.values(v).forEach(walk);
+            };
+            [p.main, p.types, p.exports].filter(Boolean).forEach(walk);
+            for (const f of paths) console.log(f.replace(/^\.\//, ""));
+          '); do
+            if [ ! -f "$f" ]; then
+              echo "::error::package.json declares $f, which the build did not produce"
+              exit 1
+            fi
+          done
+{% endif %}
       # prepack runs the build and the tests; running them again here would
       # execute each of them twice per release.
       - run: npm publish
