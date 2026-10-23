@@ -104,10 +104,6 @@ def audit(repo_root="."):
     if not os.path.exists(os.path.join(repo_root, ".shellcheckrc")):
         issues.append("Missing: .shellcheckrc")
     {% endif %}
-    {% if include_code_of_conduct %}
-    if not os.path.exists(os.path.join(repo_root, "CODE_OF_CONDUCT.md")):
-        issues.append("Missing: CODE_OF_CONDUCT.md")
-    {% endif %}
     {% if use_apm %}
     if not os.path.exists(os.path.join(repo_root, "apm.yml")):
         issues.append("Missing: apm.yml")
@@ -133,7 +129,6 @@ def audit(repo_root="."):
         + sum(len(LANG_DIRECTORIES.get(l, [])) for l in EXPECTED_LANGUAGES)
         {% if use_precommit %}+ 1{% endif %}
         {% if include_shell_tooling %}+ 1{% endif %}
-        {% if include_code_of_conduct %}+ 1{% endif %}
         {% if use_apm %}+ 1{% endif %}
     )
 

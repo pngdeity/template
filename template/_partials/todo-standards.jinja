@@ -1,6 +1,4 @@
-## Inline Annotations
-
-Tag type and description in source comments. `FIXME`, `BUG`, and `HACK` are merge-blocked by CI.
+Tag type and description in source comments.
 
 | Tag | Use |
 |-----|-----|
@@ -16,4 +14,5 @@ Format: uppercase tag, colon, imperative description. Include an issue reference
 // FIXME: panics on empty input
 ```
 
-Never merge `FIXME`, `BUG`, or `HACK` into `main`. Convert to a tracked issue or resolve before merging.
+{% if include_annotation_gate %}Never merge `FIXME`, `BUG`, or `HACK` into `main`. Convert them to a task or resolve them before merging.{% else %}Resolve `FIXME`, `BUG`, and `HACK` before merging, or convert them into a task; no CI check enforces this here.{% endif %}
+

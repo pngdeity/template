@@ -10,13 +10,30 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Lint TASKS.md
-        if: hashFiles('TASKS.md') != ''
-        run: npx @tasks-md/lint TASKS.md
-      - name: Report missing TASKS.md
-        if: hashFiles('TASKS.md') == ''
+{% if use_prereg %}
+      # Every TASKS.md in the repository, not just the root one: monorepos keep
+      # one queue per package, and a malformed nested file blocks just the same.
+      - name: Lint every TASKS.md
         run: |
-          echo "No TASKS.md at the repository root, but this workflow was"
-          echo "installed by include_tasks_lint. Restore TASKS.md, or remove"
-          echo ".github/workflows/tasks-lint.yml and this check."
-          exit 1
+          mapfile -t files < <(git ls-files -z '*TASKS.md' | xargs -0 -r -n1 printf '%s\n')
+          if [ {{ '${#files[@]}' }} -eq 0 ]; then
+            echo 'No TASKS.md at the repository root, but this workflow was'
+            echo 'installed by include_tasks_lint. Restore TASKS.md, or remove'
+            echo '.github/workflows/tasks-lint.yml and this check.'
+            exit 1
+          fi
+          npx @tasks-md/lint --require-prereg --prereg-allowlist=.prereg-allowlist "${files[@]}"
+{% else %}
+      # Every TASKS.md in the repository, not just the root one: monorepos keep
+      # one queue per package, and a malformed nested file blocks just the same.
+      - name: Lint every TASKS.md
+        run: |
+          mapfile -t files < <(git ls-files -z '*TASKS.md' | xargs -0 -r -n1 printf '%s\n')
+          if [ {{ '${#files[@]}' }} -eq 0 ]; then
+            echo 'No TASKS.md at the repository root, but this workflow was'
+            echo 'installed by include_tasks_lint. Restore TASKS.md, or remove'
+            echo '.github/workflows/tasks-lint.yml and this check.'
+            exit 1
+          fi
+          npx @tasks-md/lint "${files[@]}"
+{% endif %}

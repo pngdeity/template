@@ -8,9 +8,9 @@
 4. Make your changes
 5. Push to your fork: `git push origin feat/my-feature`
 6. Open a Pull Request
-
-{% if fork_upstream %}{% include 'template/_partials/fork-workflow.jinja' %}{% endif %}
-
+{% if fork_upstream %}
+{% include 'template/_partials/fork-workflow.jinja' %}
+{% endif %}
 ## Development Setup
 
 {% include 'template/_partials/prerequisites.jinja' %}
@@ -44,18 +44,15 @@ All submissions require review.{% if use_codeowners %} CODEOWNERS are automatica
 
 {% if use_apm %}{% include 'template/_partials/setup-apm.jinja' %}{% endif %}
 
-## Testing
+## Commands
 
-{% include 'template/_partials/testing.jinja' %}
+Run these from the repository root.
 
-## Linting & Formatting
-
-{% include 'template/_partials/linting.jinja' %}
-
-## Task Tracking
+{% include 'template/_partials/development.jinja' %}
+## Task tracking
 
 {% include 'template/_partials/tasking.jinja' %}
 
-## Inline Annotations
+## Inline annotations
 
 {% include 'template/_partials/todo-standards.jinja' %}

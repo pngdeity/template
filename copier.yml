@@ -269,15 +269,16 @@ use_commitizen:
   type: bool
   help: Enforce Conventional Commits via commitizen?
   default: "{{ languages | length > 0 }}"
-include_code_of_conduct:
-  type: bool
-  help: Include a Code of Conduct?
-  default: false
 include_tasks_lint:
   type: bool
   help: Include CI check that lints TASKS.md?
   default: true
   ask: "{{ ci_provider == 'github' }}"
+use_prereg:
+  type: bool
+  help: Require a pre-registration block on every non-trivial task?
+  default: false
+  ask: "{{ ci_provider == 'github' and include_tasks_lint }}"
 include_annotation_gate:
   type: bool
   help: Include CI check that blocks FIXME/HACK/BUG annotations?

@@ -1,9 +1,13 @@
 # {{ repo_name }}
 
+{% if repo_description %}
 {{ repo_description }}
 
+{% endif %}
+{% set gh_slug = github_username if github_username else (author_name | lower | replace(' ', '-')) %}
+{% if ci_provider == 'github' or license_type != 'proprietary' or use_precommit %}
 {% if ci_provider == 'github' %}
-[![CI](https://github.com/{{ github_username | default(author_name | lower | replace(' ', '-')) }}/{{ repo_name }}/actions/workflows/{% if has_node %}node{% elif has_python %}python{% elif has_go %}go{% elif has_rust %}rust{% elif has_dotnet %}dotnet{% else %}secret-scan{% endif %}.yml/badge.svg)](https://github.com/{{ github_username | default(author_name | lower | replace(' ', '-')) }}/{{ repo_name }}/actions)
+[![CI](https://github.com/{{ gh_slug }}/{{ repo_name }}/actions/workflows/{% if has_node %}node{% elif has_python %}python{% elif has_go %}go{% elif has_rust %}rust{% elif has_dotnet %}dotnet{% else %}secret-scan{% endif %}.yml/badge.svg)](https://github.com/{{ gh_slug }}/{{ repo_name }}/actions)
 {% endif %}
 {% if license_type != 'proprietary' %}
 [![License](https://img.shields.io/badge/license-{{ license_type | replace('-', '--') }}-blue.svg)](LICENSE)
@@ -12,77 +16,67 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 {% endif %}
 
-## Table of Contents
+{% endif %}
+## Overview
 
-- [Quick Start](#quick-start)
-- [Prerequisites](#prerequisites)
-- [Development](#development)
-- [Task Tracking](#task-tracking)
-- [Inline Annotations](#inline-annotations)
-{% if use_commitizen %}- [Commit Convention](#commit-convention)
-{% endif %}{% if include_code_of_conduct %}- [Code of Conduct](#code-of-conduct)
-{% endif %}- [License](#license)
+{% if repo_description %}
+{{ repo_description }}
+{% else %}
+> [!NOTE]
+> Replace this placeholder with two or three sentences — what the project does,
+> who it is for, and what makes it different from the obvious alternative. Keep
+> it short; the detail belongs in [docs/](docs/).
+{% endif %}
 
-## Quick Start
+## Documentation
 
-```bash
-git clone {{ repo_name }}.git
-cd {{ repo_name }}
-```
+{% if include_contributing %}
+- [Contributing guide](CONTRIBUTING.md) — how to propose changes and get them merged.
+{% endif %}
+- [AGENTS.md](AGENTS.md) — repository layout, commands, and working conventions.
+- [TASKS.md](TASKS.md) — the task queue and how work is claimed.
+{% if include_security %}
+- [SECURITY.md](SECURITY.md) — how to report a vulnerability.
+{% endif %}
+
+## Install
 
 {% include 'template/_partials/prerequisites.jinja' %}
+## Usage
 
-{% if has_python %}
-{% include 'template/_partials/setup-python.jinja' %}
-{% endif %}
-{% if has_node %}
-{% include 'template/_partials/setup-node.jinja' %}
-{% endif %}
-{% if has_go %}
-{% include 'template/_partials/setup-go.jinja' %}
-{% endif %}
-{% if has_rust %}
-{% include 'template/_partials/setup-rust.jinja' %}
-{% endif %}
-{% if has_dotnet %}
-{% include 'template/_partials/setup-dotnet.jinja' %}
-{% endif %}
-{% if has_tofu %}
-{% include 'template/_partials/setup-tofu.jinja' %}
-{% endif %}
+```bash
+# Replace with the smallest runnable example.
+```
 
 ## Development
 
 {% if use_precommit %}
-Pre-commit hooks enforce formatting and linting. Install after cloning:
+Pre-commit hooks enforce formatting and linting. Install them after cloning:
 
 ```bash
 pre-commit install
 pre-commit install --hook-type commit-msg
 ```
+
 {% endif %}
-
-Testing:
-
-{% include 'template/_partials/testing.jinja' %}
-
-Linting:
-
-{% include 'template/_partials/linting.jinja' %}
-
-## Task Tracking
+{# development.jinja, tasking.jinja and todo-standards.jinja provide body text
+   only; each caller owns the heading, so no section is duplicated. #}{% include 'template/_partials/development.jinja' %}
+## Task tracking
 
 {% include 'template/_partials/tasking.jinja' %}
-
-## Inline Annotations
+## Inline annotations
 
 {% include 'template/_partials/todo-standards.jinja' %}
-{% if use_commitizen %}
-## Commit Convention
+{{ '' }}{% if use_commitizen %}
+## Commit convention
 
 {% include 'template/_partials/conventional-commits.jinja' %}
 {% endif %}
+{% if include_security %}
+## Security
 
+To report a vulnerability, follow [SECURITY.md](SECURITY.md).
+{% endif %}
 ## License
 
 {% if license_type != 'proprietary' %}

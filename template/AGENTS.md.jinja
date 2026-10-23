@@ -7,23 +7,16 @@
 
 ## This repository
 
-{# Trimmed block so the description line keeps its newline under trim_blocks #}
-This repository is `{{ repo_name }}`.{% if repo_description %} {{ repo_description }}{% endif %}
-{# Keep the blank line below identical on both branches (trim_blocks eats one) #}
+{# The trailing {{ '' }} stops the line from ending in a block tag, which is what
+   lets trim_blocks keep the newline and the blank line below it. #}
+This repository is `{{ repo_name }}`.{% if repo_description %} {{ repo_description }}{% endif %}{{ '' }}
 
 ## Commands
 
 Run these before claiming work is done.
 
 {% if has_python or has_node or has_go or has_rust or has_dotnet %}
-Testing:
-
-{% include 'template/_partials/testing.jinja' %}
-
-Linting:
-
-{% include 'template/_partials/linting.jinja' %}
-
+{% include 'template/_partials/development.jinja' %}
 {% endif %}
 ## Task tracking
 
@@ -38,7 +31,31 @@ Linting:
 - Do not reprioritize or restructure someone else's task. Record the concern in
   its Details and leave the priority alone.
 
-The field-by-field format is defined in the README's Task Tracking section.
+### When the queue is blocked
+
+If every remaining task is blocked, do not idle and do not pick a blocked task
+anyway. Spend the turn on read-only research against the most promising one:
+
+- Append findings to its `**Research**` field under a dated subheading
+  (`### 2026-10-22`). Keep `**Details**` as the author wrote it — that field is
+  intent, `Research` is what you found.
+- Stamp `**Last-enriched**: YYYY-MM-DD`. Respect a seven-day cooldown per task;
+  one enrichment per turn.
+- Never edit `**Blocked**` or `**Blocked by**`. If your research shows a blocker
+  is gone, say so in the task's Details and ask; clearing a blocker is the
+  owner's decision.
+- If a task is blocked because an action is forbidden to you rather than
+  impossible, add `**Blocked**: needs-user-approval —` with the reason instead of
+  silently skipping it, so the next session does not retry the same thing.
+
+### Disagreeing with the queue
+
+Priority and structure belong to whoever wrote the task. If you think a task is
+mis-prioritised, wrong, or obsolete, write the objection into its Details and
+ask. Do not move it between tiers, do not delete it, and do not quietly do
+something else.
+
+The field-by-field format is defined in the README's Task tracking section.
 
 ## Inline annotations
 

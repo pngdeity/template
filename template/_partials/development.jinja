@@ -1,0 +1,65 @@
+Commands are grouped by language. Run each from the repository root.
+
+{% for lang in languages %}{% if lang == 'python' %}
+### Python
+
+```bash
+uv run pytest
+uv run ruff check . && uv run ruff format --check .
+{% if python_scaffolding == 'application' %}
+uv run mypy src/
+{% endif %}
+```
+
+{% elif lang == 'javascript' or lang == 'typescript' %}
+### {{ 'Deno' if node_runtime == 'deno' else 'Node.js' }}
+
+```bash
+{{ node_test_cmd }}
+{{ node_lint_cmd }}
+{% if has_node_build %}
+npm run typecheck
+{% endif %}
+```
+
+{% elif lang == 'go' %}
+### Go
+
+```bash
+go test -race -shuffle=on -count=1 -coverprofile=coverage.out ./...
+golangci-lint run && gosec ./... && govulncheck ./...
+```
+
+{% elif lang == 'rust' %}
+### Rust
+
+```bash
+cargo test
+cargo fmt --check && cargo clippy -- -D warnings
+```
+
+{% elif lang == 'dotnet' %}
+### .NET
+
+```bash
+dotnet test
+dotnet format --verify-no-changes
+dotnet build --no-restore
+```
+
+{% elif lang == 'tofu' %}
+### OpenTofu
+
+```bash
+tofu fmt -check -recursive && tofu validate && tofu plan -detailed-exitcode
+tflint --recursive
+```
+{% endif %}{% endfor %}{% if include_shell_tooling %}
+### Shell
+
+```bash
+shellcheck **/*.sh
+shfmt -d .
+```
+
+{% endif %}

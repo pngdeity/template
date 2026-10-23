@@ -17,11 +17,8 @@
     "include_contributing": ["CONTRIBUTING.md"],
     "include_security": ["SECURITY.md"],
     "use_codeowners": ["CODEOWNERS"],
-    "include_code_of_conduct": ["CODE_OF_CONDUCT.md"],
     "include_tasks_lint": [".github/workflows/tasks-lint.yml"],
     "include_annotation_gate": [".github/workflows/annotation-gate.yml"],
-    "has_node_build": ["tsconfig.json"],
-    "uses_deno": ["deno.json"],
     "use_apm": ["apm.yml"]
   }
 }

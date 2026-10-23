@@ -23,3 +23,5 @@ Commit messages follow the [Conventional Commits](https://www.conventionalcommit
 Subject line must be ≤72 characters. Wrap body at 72 characters.
 
 Breaking changes: append `!` after the type/scope (e.g. `feat!:` or `feat(api)!:`) and add `BREAKING CHANGE:` footer.
+
+When a commit completes a task from TASKS.md, add `closes <task-id>` as the last line of the body. It is what distinguishes a commit that finished tracked work from an untasked change, and it is the only record that survives the task's removal.

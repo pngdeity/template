@@ -40,7 +40,7 @@ repos:
         language: system
         types_or: [javascript, jsx, typescript, tsx]
         pass_filenames: false
-{% if node_lint == 'biome' %}
+{% elif node_lint == 'biome' %}
       - id: biome-check
         name: biome check
         entry: npx biome check --write

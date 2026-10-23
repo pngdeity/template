@@ -16,7 +16,7 @@
      commit and git log becomes the archive.
      Priority: P0 broken or users blocked. P1 planned work. P2 valuable, not
      blocking. P3 someday, kept for reference.
-     Full field reference: README, Task Tracking section.
+     Full field reference: README, Task tracking section.
 -->
 
 <!-- policy: Run tests before every commit. Never skip CI checks.
@@ -31,11 +31,38 @@
   - **Tags**: backend
   - **Details**: Replace with the change and why it is needed.
   - **Acceptance**: The new behavior is covered by a test.
-  - **Verification**: `{% if has_python %}uv run pytest{% elif has_go %}go test ./...{% elif has_rust %}cargo test{% elif has_dotnet %}dotnet test{% elif has_node %}npm test{% else %}echo replace-me{% endif %}`
+  - **Verification**: `{% for lang in languages %}{% if lang == 'python' -%}
+uv run pytest
+{%- elif lang == 'javascript' or lang == 'typescript' -%}
+{{ node_test_cmd }}
+{%- elif lang == 'go' -%}
+go test ./...
+{%- elif lang == 'rust' -%}
+cargo test
+{%- elif lang == 'dotnet' -%}
+dotnet test
+{%- endif %}{% if not loop.last %} && {% endif %}{% endfor %}{% if not languages %}echo replace-me{% endif %}`
   - **Files**: `src/`, `tests/`
   - **Touches**: `src/`
 
 ## P2
+
+- [ ] Standing audit loop — run once, then delete this block (@agent-id)
+  - **ID**: standing-audit-gap-loop
+  - **Tags**: standing-loop, meta
+  - **Details**: Audit this repository for work that is missing from the queue:
+    unfinished TODO/FIXME/HACK annotations, documentation that contradicts the
+    code, CI checks that no longer match the build, and dependency or tool
+    versions that have drifted. Queue what you find; fix nothing in this run.
+    Rewrite this Details field for this repository before running it — a
+    generic brief produces generic tasks.
+  - **Acceptance**: Every finding is a task in the tier it belongs to, with an
+    ID, Details, and a Verification command. No finding is duplicated by an
+    existing task. This block is removed in the same commit. No source file
+    outside TASKS.md changed.
+  - **Verification**: `npx @tasks-md/lint TASKS.md && test "$(git diff --name-only HEAD~1 -- . | grep -vc '^TASKS\.md$')" = 0`
+  - **Files**: `TASKS.md`, `AGENTS.md`, `docs/`
+  - **Touches**: `TASKS.md`
 
 ## P3
 
