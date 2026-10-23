@@ -106,3 +106,45 @@ This only works when the template is tagged: `check-update` compares PEP 440
 versions derived from git tags on both sides. `git describe --tags` reports the
 highest-ranking tag at a commit, so two tags on the same commit are
 indistinguishable — a new version requires a new commit *and* a new tag.
+
+## Migrations
+
+`copier update` overwrites the files the template renders and leaves everything
+else alone. That is the right default and it covers most changes, but three
+kinds of change it cannot make on its own:
+
+- a file that stopped being rendered is **never deleted** — the old copy stays,
+  now owned by nobody;
+- an answer silently changed meaning, so the stored answers file says one thing
+  while the new templates assume another;
+- a hand-added key moved to a different place in a regenerated file.
+
+A `_migrations` entry is the escape hatch, and it is worth being strict about
+when to reach for one. A migration is warranted when an *existing project* is
+wrong after `update` in a way no template change can fix — not when a file's
+content changed (that is just a template edit), and not when a new question was
+added (answering it is the adopter's job).
+
+```yaml
+_migrations:
+  - version: v1.1.0
+    command: "python3 scripts/migrations/v1_1_0_remove_static.py ."
+    when: "{{ _copier_operation == 'update' }}"
+```
+
+`version` is the template version that introduces the change. Migrations at or
+below the version the project recorded are skipped, so an entry is written once
+and never edited; a mistake in one is fixed by the next version, not by rewriting
+history. The `when` clause is a template expression evaluated per run — this
+example restricts the migration to `update`, because a fresh `copy` has nothing
+to migrate.
+
+The command is a script under `scripts/migrations/`, never an inline shell
+pipeline. A migration runs in the adopter's working tree with their files, so it
+must be reviewable in a diff, testable on its own, and refuse rather than guess
+when it finds something it does not recognise. The shipped
+`v1_1_0_remove_static.py` is the worked example of that discipline: it removes
+`static/` only when the directory exists **and** is empty, and otherwise tells
+the operator what to move and exits non-zero. It is inert today — no version of
+this template ever rendered `static/`, so it finds nothing and exits 0 — which
+is the property that makes it safe to ship as a reference.

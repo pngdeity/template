@@ -22,21 +22,6 @@
 <!-- policy: Every template change is verified by a render, not by reading.
      policy: Prefer fixing root causes over symptoms. -->
 
-## P1
-
-- [ ] Add a `_migrations` worked example (v1.0.0 → v1.1.0)
-  - **ID**: docs-migrations
-  - **Tags**: docs, copier
-  - **Details**: Migrations are the one Copier feature the template documents
-    but never demonstrates. A migration was attempted once and dropped after it
-    turned out to be unnecessary, so there is no working reference.
-  - **Acceptance**: `copier.yml` contains one migration whose command is a repo
-    script, and `docs/` explains when a migration is warranted.
-  - **Verification**: `python3 -c "import yaml;yaml.safe_load(open('copier.yml'))"`
-  - **Files**: `copier.yml`, `scripts/`
-  - **Touches**: `copier.yml`, `scripts/`
-  - **Estimate**: 4h
-
 ## P2
 
 - [ ] Research: decide what `docs/` should contain (@opencode)

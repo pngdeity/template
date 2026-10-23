@@ -1,22 +1,20 @@
 _min_copier_version: "9.0.0"
 _templates_suffix: .jinja
 _subdirectory: template
+# Each entry protects a file an adopter is expected to have rewritten:
+# README/AGENTS/CHANGELOG/SECURITY/CONTRIBUTING are the documents they write
+# first, CODEOWNERS names real people, TASKS.md is their own backlog, .env
+# holds local secrets, and **/.gitkeep keeps an empty directory in git without
+# overwriting the real files beside it.
 _skip_if_exists:
-  # The documents an adopter rewrites first. Copier must never replace a
-  # README that describes their actual project with the template's placeholder.
   - README.md
   - AGENTS.md
   - CHANGELOG.md
   - SECURITY.md
   - CONTRIBUTING.md
-  # CODEOWNERS names real people; regenerating it would silently drop them.
   - CODEOWNERS # active only when use_codeowners: true
-  # The task queue is the adopter's own backlog, not the template's.
   - TASKS.md
-  # Local secrets and configuration. Overwriting .env would destroy credentials.
   - .env
-  # Directory placeholders exist only to keep an empty directory in git; the
-  # adopter's own files in the same directory must survive.
   - "**/.gitkeep"
 _exclude:
   - "**/__pycache__"
@@ -42,6 +40,19 @@ _tasks:
   - command: >-
       command -v apm >/dev/null 2>&1 && apm install || echo "  → apm not found — run: apm install"
     when: "{{ use_apm and _copier_operation == 'copy' }}"
+# Migrations run during `copier update`, on the project being updated, after the
+# new files land. They are the only place to fix what a template change cannot:
+# a file that stopped being rendered is never deleted, and an answer the old
+# version wrote keeps its old meaning. Version keys must be PEP 440; every
+# migration at or below the version the project recorded is skipped, so an
+# entry is written once and never edited.
+# The example below is inert: no copy of this template has ever rendered
+# `static/`, so `scripts/migrations/v1_1_0_remove_static.py` finds nothing and
+# exits 0. Replace it when the first real migration is needed.
+_migrations:
+  - version: v1.1.0
+    command: "python3 scripts/migrations/v1_1_0_remove_static.py ."
+    when: "{{ _copier_operation == 'update' }}"
 # _external_data:
 #   parent_tpl: .copier-answers.yml
 _jinja_extensions:
