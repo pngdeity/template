@@ -41,12 +41,58 @@
 
 ## Install
 
-{% include 'template/_partials/prerequisites.jinja' %}
+{% include 'template/_partials/prerequisites.jinja' %}{% if true %}
+{% endif %}
 ## Usage
 
+{% if has_python or has_node or has_go or has_rust or has_dotnet %}
+{% if has_python %}
 ```bash
-# Replace with the smallest runnable example.
+uv sync
+{% if python_scaffolding == 'application' %}
+uv run python -m {{ repo_name | replace('-', '_') }}
+{% else %}
+uv run python -m {{ repo_name | replace('-', '_') }} --help
+{% endif %}
 ```
+
+{% elif has_node %}
+```bash
+{{ node_install_cmd }}
+{% if is_node_publishable and node_build != 'none' %}
+{{ node_build_cmd }}
+{% endif %}
+```
+{% if is_node_publishable %}
+Import the package by name; its entrypoints are declared in `package.json`
+under `exports`.
+{% else %}
+Run the entrypoint named in `package.json`.
+{% endif %}
+
+{% elif has_go %}
+```bash
+{% if go_scaffolding == 'application' %}
+go run ./cmd/{{ repo_name }}
+{% else %}
+go build ./...
+{% endif %}
+```
+
+{% elif has_rust %}
+```bash
+cargo run --release
+```
+
+{% elif has_dotnet %}
+```bash
+dotnet run --project src/{{ dotnet_namespace }}
+```
+
+{% endif %}{% endif %}
+> [!NOTE]
+> Write the smallest example that shows this project working — a command, a
+> request, a fragment of code. Do not leave a comment standing in for it.
 
 ## Development
 

@@ -329,6 +329,22 @@ def check_blank_lines(dest: Path, problems: list[str]) -> None:
                 problems.append(f"{name}:{index + 1} has a double blank line")
 
 
+def check_usage_placeholder(dest: Path, problems: list[str]) -> None:
+    # A fence whose only content is a comment reads as a runnable command and
+    # is not one: the reader cannot tell it apart from a finished example.
+    readme = dest / "README.md"
+    if not readme.exists():
+        return
+    text = readme.read_text()
+    if "## Usage" not in text:
+        return
+    usage = text.split("## Usage", 1)[1].split("\n## ", 1)[0]
+    for block in usage.split("```")[1::2]:
+        body = [line.strip() for line in block.splitlines() if line.strip()]
+        if body and all(line.startswith("#") for line in body):
+            problems.append("README.md ## Usage is a fence of comments only")
+
+
 def check_lint(dest: Path, problems: list[str]) -> str:
     proc = subprocess.run(
         ["npx", "--yes", "@tasks-md/lint", "TASKS.md"],
@@ -467,6 +483,7 @@ def run_config(copier: str, cfg: Config, out_dir: Path) -> list[str]:
     check_yaml(dest, problems)
     check_jinja(dest, problems)
     check_blank_lines(dest, problems)
+    check_usage_placeholder(dest, problems)
     if cfg.adopt:
         check_manifest_overwritten(dest, problems)
     check_lint(dest, problems)
