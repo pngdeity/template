@@ -9,7 +9,18 @@
 
 {# The trailing {{ '' }} stops the line from ending in a block tag, which is what
    lets trim_blocks keep the newline and the blank line below it. #}
-This repository is `{{ repo_name }}`.{% if repo_description %} {{ repo_description }}{% endif %}{{ '' }}
+This repository is `{{ repo_name }}`.{% if repo_description %} {{ repo_description }}{% else %} It has no description yet; add one to `repo_description` so the next reader knows what it is for.{% endif %}{{ '' }}
+
+What lives where:
+
+- Read `README.md` before changing anything a user sees: install, usage, and
+  the published surface are described there.
+- `TASKS.md` is the work queue. Claim a task before starting it; remove it only
+  when its `**Verification**` command succeeds.
+- Long-form decisions belong in `docs/`. When you make one, write it down there
+  rather than leaving it in a commit message.
+- `scripts/audit.py` checks that this repository still has the files the
+  template assumes. Run it after moving anything at the root.
 
 ## Commands
 
