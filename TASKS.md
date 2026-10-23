@@ -24,19 +24,6 @@
 
 ## P1
 
-- [ ] Document `_skip_if_exists` entries in `copier.yml` with inline comments
-  - **ID**: docs-skip-if-exists
-  - **Tags**: docs
-  - **Details**: Each entry protects a file an adopter is likely to have
-    rewritten. That reason is not written down, so a future edit cannot tell
-    which entries are load-bearing.
-  - **Acceptance**: Every `_skip_if_exists` entry has an inline comment stating
-    why it is protected.
-  - **Verification**: `python3 -c "import yaml;yaml.safe_load(open('copier.yml'))"`
-  - **Files**: `copier.yml`
-  - **Touches**: `copier.yml`
-  - **Estimate**: 30m
-
 - [ ] Add a `_migrations` worked example (v1.0.0 → v1.1.0)
   - **ID**: docs-migrations
   - **Tags**: docs, copier

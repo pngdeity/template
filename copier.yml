@@ -2,14 +2,21 @@ _min_copier_version: "9.0.0"
 _templates_suffix: .jinja
 _subdirectory: template
 _skip_if_exists:
+  # The documents an adopter rewrites first. Copier must never replace a
+  # README that describes their actual project with the template's placeholder.
   - README.md
   - AGENTS.md
   - CHANGELOG.md
   - SECURITY.md
   - CONTRIBUTING.md
+  # CODEOWNERS names real people; regenerating it would silently drop them.
   - CODEOWNERS # active only when use_codeowners: true
+  # The task queue is the adopter's own backlog, not the template's.
   - TASKS.md
+  # Local secrets and configuration. Overwriting .env would destroy credentials.
   - .env
+  # Directory placeholders exist only to keep an empty directory in git; the
+  # adopter's own files in the same directory must survive.
   - "**/.gitkeep"
 _exclude:
   - "**/__pycache__"
