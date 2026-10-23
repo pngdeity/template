@@ -8,9 +8,8 @@
 4. Make your changes
 5. Push to your fork: `git push origin feat/my-feature`
 6. Open a Pull Request
-{% if fork_upstream %}
-{% include 'template/_partials/fork-workflow.jinja' %}
-{% endif %}
+{% if fork_upstream %}{% include 'template/_partials/fork-workflow.jinja' %}
+{% endif %}{{ '' }}
 ## Development Setup
 
 {% include 'template/_partials/prerequisites.jinja' %}{% if has_tofu %}
@@ -19,9 +18,11 @@
 
 ## Pull Request Requirements
 
-{% if use_commitizen %}
-{% include 'template/_partials/conventional-commits.jinja' %}
+{% if use_commitizen %}{% include 'template/_partials/conventional-commits.jinja' %}
 {% endif %}
+{%- if use_commitizen %}
+
+{% endif -%}
 {% if use_precommit %}
 - Pre-commit checks must pass
 {% endif %}
@@ -38,8 +39,6 @@ All submissions require review.{% if use_codeowners %} CODEOWNERS are automatica
 {% if use_apm %}{% include 'template/_partials/setup-apm.jinja' %}{% endif %}
 
 ## Commands
-
-Run these from the repository root.
 
 {% include 'template/_partials/development.jinja' %}
 ## Task tracking
