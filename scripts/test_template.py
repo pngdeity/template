@@ -14,10 +14,15 @@ Checks applied to every render:
   * `python3 scripts/audit.py` reports Grade A
   * no document contains a double blank line
   * README `## Usage` is not a fence of comments only
+  * `.gitignore` keeps its adopter-rules marker last
+  * on an adoption: `package.json` was regenerated, and the adopter's own
+    plugin entrypoint was not
 
 One config (`adopt-node`) exercises the update path instead of a fresh copy: it
 copies the template onto a project that already has a `package.json`, then runs
-`copier update` from a commit containing the working tree.
+`copier update` from a commit containing the working tree. `adopt-plugin` does
+the same for an entrypoint the adopter wrote, which the template must not
+replace.
 
 Usage:
     python3 scripts/test_template.py            # full matrix
@@ -56,6 +61,7 @@ import tempfile
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Callable
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE = REPO_ROOT
@@ -108,6 +114,18 @@ def configs() -> list[Config]:
     ts = {LANGUAGES: "[typescript]"}
     js = {LANGUAGES: "[javascript]"}
     py = {LANGUAGES: "[python]"}
+    # The answers an OpenCode plugin project needs. Shared rather than repeated
+    # per config: a plugin answer that changes (a new required question, a
+    # different default) should be one edit, and every plugin config should
+    # move with it. `node_lint` is explicit because `deno` is the default and a
+    # bun or pnpm installer refuses it.
+    plugin = {
+        **ts,
+        "node_purpose": "plugin",
+        "node_runtime": "bun",
+        "node_package_manager": "bun",
+        "node_lint": "biome",
+    }
     return [
         # --- Node / TypeScript ------------------------------------------------
         Config("ts-def", ts),
@@ -145,25 +163,10 @@ def configs() -> list[Config]:
                 "node_lint": "biome",
             },
         ),
-        Config(
-            "ts-plugin-src",
-            {
-                **ts,
-                "node_purpose": "plugin",
-                "node_runtime": "bun",
-                "node_package_manager": "bun",
-                "node_lint": "biome",
-            },
-        ),
+        Config("ts-plugin-src", plugin),
         Config(
             "ts-plugin-tsc",
-            {
-                **ts,
-                "node_purpose": "plugin",
-                "node_build": "tsc",
-                "node_package_manager": "pnpm",
-                "node_lint": "biome",
-            },
+            {**plugin, "node_build": "tsc", "node_package_manager": "pnpm"},
         ),
         Config(
             "ts-plugin-tsup",
@@ -174,25 +177,11 @@ def configs() -> list[Config]:
                 "node_package_manager": "yarn",
             },
         ),
-        Config(
-            "ts-plugin-scoped",
-            {
-                **ts,
-                "node_purpose": "plugin",
-                "node_package_manager": "bun",
-                "node_runtime": "bun",
-                "node_lint": "biome",
-                "node_package_scope": "pngdeity",
-            },
-        ),
+        Config("ts-plugin-scoped", {**plugin, "node_package_scope": "pngdeity"}),
         Config(
             "ts-plugin-peer",
             {
-                **ts,
-                "node_purpose": "plugin",
-                "node_package_manager": "bun",
-                "node_runtime": "bun",
-                "node_lint": "biome",
+                **plugin,
                 "author_email": "dev@example.com",
                 "node_keywords": "[opencode, plugin]",
                 "node_peer_dependencies": '{"@opencode/plugin": ">=2.0.0", "solid-js": "^1.9.0"}',
@@ -247,6 +236,15 @@ def configs() -> list[Config]:
                 "include_security": "true",
             },
         ),
+        # `use_precommit` and `use_apm` each gate whole files that no other
+        # config renders, so nothing verified them. The pre-commit tasks now
+        # report a failed hook install instead of aborting the render, which is
+        # what let these run on a host with core.hooksPath set.
+        Config(
+            "tools-precommit",
+            {**py, "use_precommit": "true", "use_commitizen": "true"},
+        ),
+        Config("tools-apm", {**py, "use_apm": "true"}),
         # --- Adoption ---------------------------------------------------------
         # `package.json` used to be in `_skip_if_exists`, so an adopted project
         # kept its own manifest while every other file followed the template's
@@ -256,6 +254,7 @@ def configs() -> list[Config]:
             {LANGUAGES: "[typescript]", "node_purpose": "library"},
             adopt=True,
         ),
+        Config("adopt-plugin", plugin, adopt=True),
     ]
 
 
@@ -334,7 +333,7 @@ def render(copier: str, cfg: Config, dest: Path) -> tuple[bool, str]:
     return proc.returncode == 0, (proc.stdout + proc.stderr).strip()
 
 
-def check_json(dest: Path, problems: list[str]) -> None:
+def check_json(cfg: Config, dest: Path, problems: list[str]) -> None:
     for rel in JSON_FILES:
         path = dest / rel
         if not path.exists():
@@ -348,7 +347,7 @@ def check_json(dest: Path, problems: list[str]) -> None:
             problems.append(f"{rel} is not valid JSON: {exc}")
 
 
-def check_yaml(dest: Path, problems: list[str]) -> None:
+def check_yaml(cfg: Config, dest: Path, problems: list[str]) -> None:
     try:
         import yaml  # type: ignore[import-untyped]
     except ImportError:
@@ -361,7 +360,7 @@ def check_yaml(dest: Path, problems: list[str]) -> None:
             problems.append(f"{path.name} is not valid YAML: {exc}")
 
 
-def check_jinja(dest: Path, problems: list[str]) -> None:
+def check_jinja(cfg: Config, dest: Path, problems: list[str]) -> None:
     for path in dest.rglob("*"):
         if not path.is_file() or path.suffix not in (".md", ".yml", ".yaml", ".json"):
             continue
@@ -378,7 +377,7 @@ def check_jinja(dest: Path, problems: list[str]) -> None:
             problems.append(f"unevaluated Jinja in {rel}")
 
 
-def check_blank_lines(dest: Path, problems: list[str]) -> None:
+def check_blank_lines(cfg: Config, dest: Path, problems: list[str]) -> None:
     for name in DOC_FILES:
         path = dest / name
         if not path.exists():
@@ -391,7 +390,7 @@ def check_blank_lines(dest: Path, problems: list[str]) -> None:
                 problems.append(f"{name}:{index + 1} has a double blank line")
 
 
-def check_usage_placeholder(dest: Path, problems: list[str]) -> None:
+def check_usage_placeholder(cfg: Config, dest: Path, problems: list[str]) -> None:
     # A fence whose only content is a comment reads as a runnable command and
     # is not one: the reader cannot tell it apart from a finished example.
     readme = dest / "README.md"
@@ -407,7 +406,7 @@ def check_usage_placeholder(dest: Path, problems: list[str]) -> None:
             problems.append("README.md ## Usage is a fence of comments only")
 
 
-def check_gitignore(dest: Path, problems: list[str]) -> None:
+def check_gitignore(cfg: Config, dest: Path, problems: list[str]) -> None:
     # The generated half must end at the adopter marker, or an `update` would
     # overwrite whatever the adopter put below it.
     path = dest / ".gitignore"
@@ -424,7 +423,7 @@ def check_gitignore(dest: Path, problems: list[str]) -> None:
         problems.append(".gitignore repeats the adopter-rules marker")
 
 
-def check_lint(dest: Path, problems: list[str]) -> str:
+def check_lint(cfg: Config, dest: Path, problems: list[str]) -> None:
     proc = subprocess.run(
         [*lint_command(), "TASKS.md"],
         cwd=dest,
@@ -434,10 +433,9 @@ def check_lint(dest: Path, problems: list[str]) -> str:
     out = proc.stdout + proc.stderr
     if proc.returncode != 0 or "found 0 error" not in out:
         problems.append("TASKS.md failed @tasks-md/lint")
-    return out
 
 
-def check_audit(dest: Path, problems: list[str]) -> str:
+def check_audit(cfg: Config, dest: Path, problems: list[str]) -> None:
     proc = subprocess.run(
         [sys.executable, "scripts/audit.py"],
         cwd=dest,
@@ -452,10 +450,9 @@ def check_audit(dest: Path, problems: list[str]) -> str:
     last = out.splitlines()[-1] if out else ""
     if "Grade: A" not in last:
         problems.append(f"audit did not report Grade A: {last or 'no output'}")
-    return last
 
 
-def check_manifest_overwritten(dest: Path, problems: list[str]) -> None:
+def check_manifest_overwritten(cfg: Config, dest: Path, problems: list[str]) -> None:
     # `copier update` must regenerate package.json: a manifest that keeps the
     # adopter's values while the rest of the tree follows the template's Node
     # answers disagrees with itself, silently.
@@ -472,6 +469,22 @@ def check_manifest_overwritten(dest: Path, problems: list[str]) -> None:
         problems.append("package.json kept the adopter's hand-written keys")
     if not data.get("exports"):
         problems.append("package.json is missing the template's exports block")
+
+
+def check_entrypoint_overwritten(cfg: Config, dest: Path, problems: list[str]) -> None:
+    # The inverse of check_manifest_overwritten: a plugin's root entrypoint is
+    # the author's code, so a re-export the template's stub does not contain
+    # must survive both the copy and the update. Whether one is expected is a
+    # property of the config, not of the fixture, so the two cannot drift.
+    expects = cfg.data.get("node_purpose") == "plugin"
+    entrypoint = dest / "index.ts"
+    if not expects:
+        return
+    if not entrypoint.exists():
+        problems.append("index.ts is missing for a plugin adoption")
+        return
+    if "export *" not in entrypoint.read_text():
+        problems.append("index.ts lost the adopter's named re-export")
 
 
 def template_fingerprint() -> str:
@@ -669,6 +682,12 @@ def adopt(copier: str, cfg: Config, dest: Path) -> tuple[bool, str]:
         json.dumps({"name": "hand-written", "leftover-key": True}, indent=2) + "\n"
     )
     (dest / "README.md").write_text("# Hand written\n")
+    # A plugin entrypoint that re-exports more than the template's default-only
+    # stub is the author's code. Both the copy and the update must leave it.
+    if cfg.data.get("node_purpose") == "plugin":
+        (dest / "index.ts").write_text(
+            'export { default } from "./src/index";\nexport * from "./src/index";\n'
+        )
 
     snapshot, log = snapshot_template(dest.parent / "template-snapshot")
     if snapshot is None:
@@ -758,19 +777,110 @@ def run_config(copier: str, cfg: Config, out_dir: Path) -> list[str]:
     return check_output(cfg, dest)
 
 
+# Every check a render must pass, in the order a reader would debug them:
+# structural correctness first, then the rendered content, then the tools that
+# assert on the result. `scopes` says when a check applies; a new check is one
+# function plus one line here, and a new scope is a new value — the dispatcher
+# below never grows an `if` branch.
+# Every check receives the config as well as the render, so a check that only
+# applies to some answers (a plugin's entrypoint, say) reads them from the
+# config instead of inferring them from what the fixture happened to write.
+Check = Callable[[Config, Path, list[str]], None]
+ALWAYS = frozenset({"copy", "adopt"})
+ADOPT_ONLY = frozenset({"adopt"})
+
+CHECKS: tuple[tuple[Check, frozenset[str]], ...] = (
+    (check_json, ALWAYS),
+    (check_yaml, ALWAYS),
+    (check_jinja, ALWAYS),
+    (check_blank_lines, ALWAYS),
+    (check_usage_placeholder, ALWAYS),
+    (check_gitignore, ALWAYS),
+    (check_manifest_overwritten, ADOPT_ONLY),
+    (check_entrypoint_overwritten, ADOPT_ONLY),
+    (check_lint, ALWAYS),
+    (check_audit, ALWAYS),
+)
+
+
 def check_output(cfg: Config, dest: Path) -> list[str]:
+    scope = "adopt" if cfg.adopt else "copy"
     problems: list[str] = []
-    check_json(dest, problems)
-    check_yaml(dest, problems)
-    check_jinja(dest, problems)
-    check_blank_lines(dest, problems)
-    check_usage_placeholder(dest, problems)
-    check_gitignore(dest, problems)
-    if cfg.adopt:
-        check_manifest_overwritten(dest, problems)
-    check_lint(dest, problems)
-    check_audit(dest, problems)
+    for check, applies_to in CHECKS:
+        if scope in applies_to:
+            check(cfg, dest, problems)
     return problems
+
+
+def rendered_relative_paths(out_dir: Path) -> set[str]:
+    """Every path a render wrote, relative to its project root, across all configs."""
+    paths: set[str] = set()
+    for project in out_dir.iterdir():
+        if not project.is_dir():
+            continue
+        for path in project.rglob("*"):
+            if path.is_file() and ".git" not in path.parts:
+                paths.add(path.relative_to(project).as_posix())
+    return paths
+
+
+def template_source_paths() -> dict[re.Pattern[str], list[Path]]:
+    """Map an output path pattern to every template file that could produce it.
+
+    Every segment carries its Jinja condition outside the suffix
+    (`{% if has_go %}go.mod{% endif %}.jinja`, and the same on directories), so
+    the output path is the template path with each `{% ... %}` segment and the
+    suffix removed. A segment built from an expression (`{{ dotnet_namespace }}`)
+    is resolved from an answer at render time, so it matches any one path
+    component.
+
+    A list per pattern, not a single file: two templates can reduce to the same
+    path, and collapsing them would silently drop one from the check. Partials
+    are excluded: they are included by another template rather than written.
+    """
+    sources: dict[re.Pattern[str], list[Path]] = {}
+    root = REPO_ROOT / "template"
+
+    def strip(text: str) -> str:
+        return re.sub(r"\{%[^%]*%\}", "", text).strip()
+
+    for path in root.rglob("*"):
+        if not path.is_file() or not path.name.endswith(".jinja"):
+            continue
+        rel_parts = path.relative_to(root).parts
+        if "_partials" in rel_parts:
+            continue
+        rendered = [strip(part) for part in rel_parts]
+        rendered[-1] = strip(rendered[-1][: -len(".jinja")])
+        # Copier writes nothing for a name whose conditional segment is empty,
+        # which is what `{{ _copier_conf.answers_file }}` reduces to.
+        if not rendered[-1]:
+            continue
+        # A segment containing an expression is resolved from an answer at
+        # render time, so it matches any one path component.
+        parts = ["[^/]+" if "{{" in part else re.escape(part) for part in rendered]
+        pattern = re.compile("^" + "/".join(parts) + "$")
+        sources.setdefault(pattern, []).append(path)
+    return sources
+
+
+def check_template_reachable(out_dir: Path, problems: list[str]) -> None:
+    # A template file no config renders is dead: it survived a deletion sweep
+    # because nothing asserted it existed. The matrix already writes every
+    # reachable path, so the render is the evidence. A file that is genuinely
+    # reachable only from an answer no config sets is a missing config, not an
+    # exemption, which is the point.
+    rendered = rendered_relative_paths(out_dir)
+    for pattern, sources in sorted(
+        template_source_paths().items(), key=lambda kv: kv[0].pattern
+    ):
+        if any(pattern.match(path) for path in rendered):
+            continue
+        for source in sources:
+            problems.append(
+                f"{source.relative_to(REPO_ROOT).as_posix()} renders nothing"
+                f" (expected output matching: {pattern.pattern})"
+            )
 
 
 def check_detect_coverage(problems: list[str]) -> None:
@@ -859,13 +969,21 @@ def main(argv: list[str]) -> int:
             raise SystemExit(f"unknown config(s): {', '.join(unknown)}")
         selected = [cfg for cfg in all_configs if cfg.name in args.names]
 
+    # Reachability needs the output of the whole matrix, so it is decided from
+    # what the user asked for, before `--changed` or a shard narrows it: either
+    # of those would report every config it skipped as dead. Asking for no
+    # names is the full matrix; asking for every name is the same set.
+    full_matrix = len(selected) == len(all_configs)
+
     fingerprint = template_fingerprint()
     already_passed = {} if args.full else cached_configs(fingerprint)
     if args.changed:
         selected = changed_configs(selected)
         if not selected:
             print("=== no changed path reaches a config; nothing to render ===")
-            return 0
+            # The whole matrix was not rendered, so reachability is unknowable
+            # this run rather than satisfied.
+            full_matrix = False
     if args.shard:
         index, count = args.shard
         whole = selected
@@ -877,9 +995,15 @@ def main(argv: list[str]) -> int:
             # A shard with no work is a fan-out bug, not a pass.
             print(f"=== shard {index}/{count} is empty ===")
             return 1
+        full_matrix = False
+    # A cached config is not rendered, so its output is absent from this run's
+    # scratch tree. Reachability therefore requires a full matrix with nothing
+    # cached; otherwise it would call every cached config's files dead.
+    check_reachability = full_matrix
     skipped = [cfg for cfg in selected if cfg.name in already_passed]
     selected = [cfg for cfg in selected if cfg.name not in already_passed]
     if skipped:
+        check_reachability = False
         print(f"cached {len(skipped)} config(s) already passing this template")
 
     copier = copier_binary()
@@ -915,6 +1039,16 @@ def main(argv: list[str]) -> int:
                         lambda c: (c.name, run_config(copier, c, out_dir)), selected
                     )
                 )
+        # Runs before the scratch tree is removed below: the render is the
+        # evidence that a template file is reachable, so it has to be read
+        # while it still exists.
+        if check_reachability:
+            reach_problems: list[str] = []
+            check_template_reachable(out_dir, reach_problems)
+            for problem in reach_problems:
+                failures += 1
+                print("FAIL unreachable-template")
+                print(f"     {problem}")
     finally:
         if not keep:
             shutil.rmtree(out_dir, ignore_errors=True)

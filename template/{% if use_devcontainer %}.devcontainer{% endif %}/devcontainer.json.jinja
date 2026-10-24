@@ -5,7 +5,6 @@
 {%- if has_rust %}{% set _ = vsix.append('"rust-lang.rust-analyzer"') %}{% endif -%}
 {%- if has_dotnet %}{% set _ = vsix.append('"ms-dotnettools.csharp"') %}{% endif -%}
 {%- if has_tofu %}{% set _ = vsix.append('"hashicorp.terraform"') %}{% endif -%}
-{%- set ext_list = vsix | join(', ') if (vsix | length) <= 2 else ('\n        ' ~ (vsix | join(',\n        ')) ~ '\n      ') -%}
 {%- set features = [] -%}
 {%- if has_go %}{% set _ = features.append('"ghcr.io/devcontainers/features/go:1": {}') %}{% endif -%}
 {%- if has_python %}{% set _ = features.append('"ghcr.io/devcontainers/features/python:1": {}') %}{% endif -%}
@@ -13,6 +12,20 @@
 {%- if has_rust %}{% set _ = features.append('"ghcr.io/devcontainers/features/rust:1": {}') %}{% endif -%}
 {%- if has_dotnet %}{% set _ = features.append('"ghcr.io/devcontainers/features/dotnet:1": {}') %}{% endif -%}
 {%- if has_tofu %}{% set _ = features.append('"ghcr.io/devcontainers/features/terraform:1": {}') %}{% endif -%}
+{#- A list renders on one line when short and one entry per line when long, so
+    a devcontainer a human edits by hand stays readable as it grows. Both lists
+    use this, rather than one joining strings and the other emitting markers. #}
+{%- macro json_array(items) -%}
+{%- if items | length <= 2 -%}
+[{{ items | join(', ') }}]
+{%- else -%}
+[
+{% for item in items %}
+        {{ item }}{% if not loop.last %},{% endif %}{{ '' }}
+{% endfor %}
+      ]
+{%- endif -%}
+{%- endmacro -%}
 {
   "name": "{{ repo_name }}",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
@@ -24,7 +37,7 @@
 {% endif %}  },
   "customizations": {
     "vscode": {
-      "extensions": [{{ ext_list }}]
+      "extensions": {{ json_array(vsix) }}
     }
   }
 }{{ '' }}

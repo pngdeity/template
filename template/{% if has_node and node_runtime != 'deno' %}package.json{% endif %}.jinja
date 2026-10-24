@@ -1,20 +1,12 @@
 {% set npm_license = license_type %}
 {% if license_type == 'GPL-3.0' %}{% set npm_license = 'GPL-3.0-only' %}{% endif %}
 {% if license_type == 'proprietary' %}{% set npm_license = 'UNLICENSED' %}{% endif %}
-{% set gh_slug = github_username if github_username else (author_name | lower | replace(' ', '-')) %}
-{% if not gh_slug %}{% set gh_slug = 'OWNER-CHANGEME' %}{% endif %}
 {% set build_entry = 'dist/index.js' %}
 {% set build_index = 'dist/index.d.ts' %}
 {
   "name": "{% if node_package_scope %}@{{ node_package_scope }}/{% endif %}{{ repo_name }}",
   "version": "0.1.0",
-{% if is_node_library %}
-  "private": false,
-{% elif is_node_plugin %}
-  "private": false,
-{% else %}
-  "private": true,
-{% endif %}
+  "private": {{ 'false' if is_node_publishable else 'true' }},
   "type": "module",
   "description": "{{ repo_description }}",
   "license": "{{ npm_license }}",

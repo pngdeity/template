@@ -4,10 +4,26 @@
 {{ repo_description }}
 
 {% endif %}
-{% set gh_slug = github_username if github_username else (author_name | lower | replace(' ', '-')) %}
+{# One badge per workflow the render emits. A single badge would name a
+   workflow this project may not have, or report one language green while
+   another is red. Built as a list so a new language workflow is one entry.
+
+   Built unconditionally, including the `secret-scan` fallback: the guard that
+   decides whether badges appear is the `ci_provider` test below, and repeating
+   that test here would let the two drift. #}
+{% set ci_workflows = [] %}
+{% if has_node %}{% set _ = ci_workflows.append('node') %}{% endif %}
+{% if has_python %}{% set _ = ci_workflows.append('python') %}{% endif %}
+{% if has_go %}{% set _ = ci_workflows.append('go') %}{% endif %}
+{% if has_rust %}{% set _ = ci_workflows.append('rust') %}{% endif %}
+{% if has_dotnet %}{% set _ = ci_workflows.append('dotnet') %}{% endif %}
+{% if has_tofu %}{% set _ = ci_workflows.append('tofu') %}{% endif %}
+{% if not ci_workflows %}{% set _ = ci_workflows.append('secret-scan') %}{% endif %}
 {% if ci_provider == 'github' or license_type != 'proprietary' or use_precommit %}
 {% if ci_provider == 'github' %}
-[![CI](https://github.com/{{ gh_slug }}/{{ repo_name }}/actions/workflows/{% if has_node %}node{% elif has_python %}python{% elif has_go %}go{% elif has_rust %}rust{% elif has_dotnet %}dotnet{% else %}secret-scan{% endif %}.yml/badge.svg)](https://github.com/{{ gh_slug }}/{{ repo_name }}/actions)
+{% for workflow in ci_workflows %}
+[![{{ workflow | capitalize }}](https://github.com/{{ gh_slug }}/{{ repo_name }}/actions/workflows/{{ workflow }}.yml/badge.svg)](https://github.com/{{ gh_slug }}/{{ repo_name }}/actions/workflows/{{ workflow }}.yml)
+{% endfor %}
 {% endif %}
 {% if license_type != 'proprietary' %}
 [![License](https://img.shields.io/badge/license-{{ license_type | replace('-', '--') }}-blue.svg)](LICENSE)

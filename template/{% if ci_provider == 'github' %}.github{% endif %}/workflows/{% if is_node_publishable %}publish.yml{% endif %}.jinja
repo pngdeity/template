@@ -16,13 +16,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      # setup-node appears here and in node-ci-setup.jinja: the registry-url
+      # input is publish-only, and the action is idempotent, so the duplicate
+      # step costs one second and needs no flag to coordinate the two files.
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: {{ node_version }}
           registry-url: https://registry.npmjs.org
           # Caching is never appropriate in a release build.
           package-manager-cache: false
-{% set node_setup_provided = true %}
 {% include 'template/_partials/node-ci-setup.jinja' %}
 {% if has_node_build %}
       # A build that silently failed would publish a package whose declared

@@ -140,6 +140,10 @@ already the effective value.
   rewritten like a derived file, so it ends with an adopter-rules marker and the
   generated half above that marker is what the template owns. Skipping it instead
   would leave an adopting checkout with none of the generated rules.
+  A plugin's root entrypoint and its `server`/`tui` shims are skipped for the
+  same reason as the documents: the template's stub re-exports only the default,
+  so an entrypoint that also carries named exports is the author's code, and a
+  render that replaced it would delete an export the manifest's `"."` promises.
 - `_tasks` are shell commands that run after generation (git init, pre-commit
   install, upstream wiring).
 - `_jinja_extensions` include `jinja2_time.TimeExtension`. The system copier

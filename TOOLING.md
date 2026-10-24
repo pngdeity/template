@@ -54,6 +54,16 @@ cannot be honoured explains itself instead of vanishing from the list.
 installers lay out `node_modules` differently from npm, so deno cannot resolve
 the tree it is asked to lint.
 
+`node_lint: biome` is refused when the runtime is `deno`. A Deno project has no
+`package.json`, so biome — a `devDependency` — has nothing to be installed into
+and no `npm ci` to run; deno is its own formatter and linter.
+
+The two refusals would leave a `deno` runtime with a `bun` or `pnpm` manager no
+linter at all, so the package manager question is closed over too: a Deno
+project installs nothing with an npm-compatible tool, and the manager answer is
+unused wherever the runtime is deno. Its validator names the conflict rather
+than letting the two questions cancel each other out.
+
 Setting the runtime to `bun` and leaving the linter at `deno` would install both
 tools and give the project a runner it cannot rely on, so the refused choice is
 the one the default resolves to: a bun project must say `biome`.

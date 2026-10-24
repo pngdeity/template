@@ -66,6 +66,7 @@ CI_SPECIFIC_FILES = {
 {% endif %}{% if is_node_publishable %}        ".github/workflows/publish.yml",
 {% endif %}{% if has_rust %}        ".github/workflows/rust.yml",
 {% endif %}{% if has_dotnet %}        ".github/workflows/dotnet.yml",
+{% endif %}{% if has_tofu %}        ".github/workflows/tofu.yml",
 {% endif %}{% if use_apm %}        ".github/workflows/apm-audit.yml",
         ".github/workflows/apm-drift.yml",
 {% endif %}    ],

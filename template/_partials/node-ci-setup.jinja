@@ -1,14 +1,12 @@
-{% if uses_bun | default(false) %}
+{% if uses_bun %}
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: latest
 {% endif %}
-{% if not node_setup_provided | default(false) %}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: {{ node_version }}
-{% endif %}
-{% if node_setup_deno | default(false) %}
+{% if node_needs_deno_setup %}
       - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
 {% endif %}
 {% if node_package_manager == 'pnpm' %}

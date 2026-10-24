@@ -19,10 +19,20 @@ _skip_if_exists:
   - CHANGELOG.md
   - SECURITY.md
   - CONTRIBUTING.md
-  - CODEOWNERS # active only when use_codeowners: true
+  - CODEOWNERS # active only when use_codeowners is true
   - TASKS.md
   - .env
   - "**/.gitkeep"
+  # A plugin's root entrypoint and entrypoint shims are its own code: the
+  # render creates them once, but an entrypoint that re-exports more than the
+  # template's default-only stub is the author's, and `update` must not replace
+  # it.
+  - "index.ts"
+  - "index.js"
+  - "server.ts"
+  - "server.js"
+  - "tui.ts"
+  - "tui.js"
 _exclude:
   - "**/__pycache__"
   - .git
@@ -40,9 +50,14 @@ _tasks:
     when: "{{ fork_upstream and _copier_operation == 'copy' }}"
   - command: ["git", "branch", "--set-upstream-to=upstream/{{ fork_upstream_branch }}", "main"]
     when: "{{ fork_upstream and _copier_operation == 'copy' }}"
-  - command: "pre-commit install"
+  # The hook is a convenience; the files it configures are the deliverable. A
+  # host with `core.hooksPath` set makes `pre-commit install` abort, so the
+  # task reports that rather than failing a render that already succeeded.
+  - command: >-
+      pre-commit install || echo "  → pre-commit install failed; run it manually (a set core.hooksPath causes this)"
     when: "{{ use_precommit and _copier_operation == 'copy' }}"
-  - command: "pre-commit install --hook-type commit-msg"
+  - command: >-
+      pre-commit install --hook-type commit-msg || echo "  → commit-msg hook not installed; run it manually"
     when: "{{ use_commitizen and use_precommit and _copier_operation == 'copy' }}"
   - command: >-
       command -v apm >/dev/null 2>&1 && apm install || echo "  → apm not found — run: apm install"
@@ -229,16 +244,6 @@ python_scaffolding:
     - tooling
   default: application
   when: "{{ has_python }}"
-node_package_manager:
-  type: str
-  help: Node package manager
-  choices:
-    - npm
-    - pnpm
-    - yarn
-    - bun
-  default: npm
-  when: "{{ has_node }}"
 node_runtime:
   type: str
   help: Node runtime and test runner
@@ -248,6 +253,21 @@ node_runtime:
     - deno
   default: node
   when: "{{ has_node }}"
+node_package_manager:
+  type: str
+  help: Node package manager
+  choices:
+    - npm
+    - pnpm
+    - yarn
+    - bun
+  default: npm
+  # A Deno project installs nothing with an npm-compatible tool: its
+  # prerequisites list deno alone, and the only linter it can have is deno,
+  # which the `bun`/`pnpm` rule below would otherwise refuse. Asking the
+  # question would create a pair with no valid answer, so it is not asked.
+  # Asked after node_runtime so this condition can read it.
+  when: "{{ has_node and node_runtime != 'deno' }}"
 node_purpose:
   type: str
   help: Node package purpose
@@ -281,7 +301,9 @@ node_lint:
     - - deno
       - value: deno
         validator: "{{ 'dependencies are installed with npm-compatible tooling, so deno cannot format or lint this tree — select biome' if node_package_manager in ('bun', 'pnpm') else '' }}"
-    - biome
+    - - biome
+      - value: biome
+        validator: "{{ 'a Deno project has no package.json, so biome cannot be installed as a devDependency — deno is its formatter and linter' if node_runtime == 'deno' else '' }}"
   default: deno
   when: "{{ has_node }}"
 node_subpath_exports:
@@ -385,16 +407,18 @@ is_node_library:
   type: bool
   default: "{{ has_node and node_purpose == 'library' and node_runtime != 'deno' }}"
   when: false
-# Whether the package is a published, loadable artefact rather than a private
-# app. A plugin is a library with a different entrypoint contract, so every
-# branch that asks "is this published?" should ask this, not is_node_library.
-is_node_publishable:
-  type: bool
-  default: "{{ has_node and node_purpose in ('library', 'plugin') and node_runtime != 'deno' }}"
-  when: false
 is_node_plugin:
   type: bool
   default: "{{ has_node and node_purpose == 'plugin' and node_runtime != 'deno' }}"
+  when: false
+# Whether the package is a published, loadable artefact rather than a private
+# app. A plugin is a library with a different entrypoint contract, so every
+# branch that asks "is this published?" should ask this, not is_node_library.
+# Defined from the two purpose flags rather than from node_purpose again: one
+# predicate, one place to change when a fourth purpose appears.
+is_node_publishable:
+  type: bool
+  default: "{{ is_node_library or is_node_plugin }}"
   when: false
 has_node_build:
   type: bool
@@ -410,6 +434,14 @@ uses_deno:
 uses_bun:
   type: bool
   default: "{{ has_node and (node_runtime == 'bun' or node_package_manager == 'bun') }}"
+  when: false
+# Whether a Node CI job installs deno too: the linter is deno but the runtime
+# is not, so deno is only the formatter. A bun-runtime project cannot reach
+# this (the deno linter is refused under a bun manager), and a deno-runtime
+# project does not need it (deno is the runtime, set up unconditionally).
+node_needs_deno_setup:
+  type: bool
+  default: "{{ has_node and node_lint == 'deno' and node_runtime != 'deno' }}"
   when: false
 # The package manager runs the script; the runtime defines what the script
 # contains. Both feed this, so no template file hardcodes a runner.
@@ -471,6 +503,13 @@ codeowners_devops:
 project_slug:
   type: str
   default: "{{ repo_name | lower | replace('-', '_') | replace(' ', '_') }}"
+  when: false
+# The GitHub account a URL is built from. One derivation for every file that
+# links to the repository: two copies drifted into a placeholder in
+# package.json and a bare `github.com//repo` in the README.
+gh_slug:
+  type: str
+  default: "{{ github_username or (author_name | lower | replace(' ', '-')) or 'OWNER-CHANGEME' }}"
   when: false
 copyright_year:
   type: str

@@ -1,0 +1,36 @@
+name: OpenTofu
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: opentofu/setup-opentofu@9d84900f3238fab8cd84ce47d658d25dd008be2f # v1
+        with:
+          tofu_version: {{ tofu_version }}
+      - run: tofu fmt -check -recursive
+      - name: Validate
+        run: |
+          tofu init -backend=false -input=false
+          tofu validate
+
+  tflint:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: opentofu/setup-opentofu@9d84900f3238fab8cd84ce47d658d25dd008be2f # v1
+        with:
+          tofu_version: {{ tofu_version }}
+      - run: tofu init -backend=false -input=false
+      - uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337 # v6
+        with:
+          tflint_version: {{ tflint_version }}
+      - run: tflint --init
+      - run: tflint --recursive

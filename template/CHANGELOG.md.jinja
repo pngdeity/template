@@ -11,6 +11,6 @@
 
 - Nothing yet.
 
-{% if ci_provider == 'github' %}{% set gh_slug = github_username if github_username else (author_name | lower | replace(' ', '-')) %}{% if gh_slug %}
+{% if ci_provider == 'github' %}
 [Unreleased]: https://github.com/{{ gh_slug }}/{{ repo_name }}/compare/v0.1.0...HEAD
-{% endif %}{% endif %}
+{% endif %}
