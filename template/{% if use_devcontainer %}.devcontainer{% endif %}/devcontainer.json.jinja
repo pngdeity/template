@@ -5,6 +5,7 @@
 {%- if has_rust %}{% set _ = vsix.append('"rust-lang.rust-analyzer"') %}{% endif -%}
 {%- if has_dotnet %}{% set _ = vsix.append('"ms-dotnettools.csharp"') %}{% endif -%}
 {%- if has_tofu %}{% set _ = vsix.append('"hashicorp.terraform"') %}{% endif -%}
+{%- set ext_list = vsix | join(', ') if (vsix | length) <= 2 else ('\n        ' ~ (vsix | join(',\n        ')) ~ '\n      ') -%}
 {%- set features = [] -%}
 {%- if has_go %}{% set _ = features.append('"ghcr.io/devcontainers/features/go:1": {}') %}{% endif -%}
 {%- if has_python %}{% set _ = features.append('"ghcr.io/devcontainers/features/python:1": {}') %}{% endif -%}
@@ -16,16 +17,14 @@
   "name": "{{ repo_name }}",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
-    "ghcr.io/devcontainers/features/git:1": {}{% if features %},{% endif -%}
+    "ghcr.io/devcontainers/features/git:1": {}{% if features %},{{ '' }}
 {% for entry in features %}
-    {{ entry }}{% if not loop.last %},{% endif %}
-{%- endfor %}
-  },
+    {{ entry }}{% if not loop.last %},{% endif %}{{ '' }}
+{% endfor %}
+{% endif %}  },
   "customizations": {
     "vscode": {
-      "extensions": [{% for ext in vsix %}
-        {{ ext }}{% if not loop.last %},{% endif %}{% endfor %}
-      ]
+      "extensions": [{{ ext_list }}]
     }
   }
-}
+}{{ '' }}

@@ -6,6 +6,13 @@ _subdirectory: template
 # first, CODEOWNERS names real people, TASKS.md is their own backlog, .env
 # holds local secrets, and **/.gitkeep keeps an empty directory in git without
 # overwriting the real files beside it.
+#
+# .gitignore is deliberately absent. Copier cannot merge one, so the template
+# renders the generated rules into the section it owns and leaves whatever
+# follows them alone: `.gitignore` ends with an "Adopter rules" marker, and the
+# generated half above it is rewritten on `update` while anything an adopter
+# adds below survives. A `copy` into an existing checkout therefore merges by
+# section instead of either dropping the generated rules or dropping theirs.
 _skip_if_exists:
   - README.md
   - AGENTS.md
@@ -110,10 +117,9 @@ _message_after_update: |
   {% if use_precommit %}
   Re-run: pre-commit install
   {% endif %}
-  {% if has_node and _copier_operation == 'update' %}
+  {% if has_node %}
   package.json was overwritten from the template. Re-apply anything you added by
   hand (extra scripts, dependencies) and commit the result.
-  {% endif %}
   {% endif %}
 repo_name:
   type: str
@@ -281,9 +287,16 @@ node_lint:
 node_subpath_exports:
   type: yaml
   help: >-
-    Extra subpath entrypoints, one per line as name: path (e.g. core: src/core.ts). Leave empty for none. "server" and "tui" are already emitted for a plugin, and "." is always present unless the purpose is plugin with no build.
+    Extra subpath entrypoints, one per line as name: path (e.g. core: src/core.ts). Leave empty for none. "server" and "tui" are already emitted for a plugin, and "." is always present for a plugin with a build.
   default: []
   when: "{{ is_node_publishable | default(false) }}"
+node_package_scope:
+  type: str
+  help: >-
+    npm scope, without the @ (e.g. pngdeity). The package name becomes @scope/<repo_name>. Leave empty for an unscoped name.
+  default: ""
+  when: "{{ is_node_publishable | default(false) }}"
+  validator: "{% if node_package_scope and not (node_package_scope | regex_search('^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$')) %}Must be a valid npm scope: lowercase letters and digits, starting with a letter, with single . _ or - separators between them{% endif %}"
 node_keywords:
   type: yaml
   help: >-

@@ -6,7 +6,7 @@
 {% set build_entry = 'dist/index.js' %}
 {% set build_index = 'dist/index.d.ts' %}
 {
-  "name": "{{ repo_name }}",
+  "name": "{% if node_package_scope %}@{{ node_package_scope }}/{% endif %}{{ repo_name }}",
   "version": "0.1.0",
 {% if is_node_library %}
   "private": false,
@@ -40,40 +40,52 @@
   "sideEffects": false,
 {% if node_build == 'none' %}
   "files": [
+    "index.ts",
     "server.ts",
     "tui.ts",
     "src",
     "!**/*.test.ts"
   ],
+  "main": "./index.ts",
   "exports": {
+    ".": "./index.ts",
     "./server": "./server.ts",
     "./tui": "./tui.ts"
   },
-  "engines": {
-    "node": ">={{ node_version }}",
-    "opencode": ">=2.0.0"
-  },
 {% else %}
   "files": [
+    "index.js",
     "server.js",
     "tui.js",
     "dist"
   ],
-  "main": "./{{ build_entry }}",
+  "main": "./index.js",
   "types": "./{{ build_index }}",
   "exports": {
     ".": {
       "types": "./{{ build_index }}",
-      "import": "./{{ build_entry }}"
+      "import": "./index.js"
     },
     "./server": "./server.js",
     "./tui": "./tui.js"
   },
+{% endif %}
   "engines": {
     "node": ">={{ node_version }}",
     "opencode": ">=2.0.0"
   },
-{% endif %}
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/{{ gh_slug }}/{{ repo_name }}.git"
+  },
+  "homepage": "https://github.com/{{ gh_slug }}/{{ repo_name }}#readme",
+  "bugs": {
+    "url": "https://github.com/{{ gh_slug }}/{{ repo_name }}/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
 {% elif is_node_library %}
   "sideEffects": false,
 {% if node_build == 'none' %}
@@ -130,15 +142,14 @@
     "test": "{{ node_test_runner }}"{% if has_node_build %},
     "build": "{{ node_build_cmd }}",
     "typecheck": "tsc --noEmit"{% endif %}{% if is_node_publishable %},
-    "prepack": "{% if has_node_build %}{{ node_build_cmd }} && {% endif %}{{ node_test_cmd }}"{% endif %}
+    "prepack": "{% if has_node_build %}{{ node_build_cmd }} && {% endif %}{{ node_test_cmd }}"{% endif %}{{ '' }}
   }{% if node_lint == 'biome' %},
   "devDependencies": {
     "@biomejs/biome": "^2.0.0"{% if has_node_build %},
-    "typescript": "^5.9.0"{% endif %}
+    "typescript": "^5.9.0"{% endif %}{{ '' }}
   }{% elif has_node_build %},
   "devDependencies": {
     "typescript": "^5.9.0"{% if node_build == 'tsup' %},
-    "tsup": "^8.0.0"{% endif %}
+    "tsup": "^8.0.0"{% endif %}{{ '' }}
   }{% endif %}{{ '' }}
-}
-
+}{{ '' }}

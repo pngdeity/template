@@ -55,6 +55,7 @@
     "node_build": "detectable only from devDependencies, which an adopter may not have installed yet",
     "node_lint": "biome.json presence indicates biome, but its absence does not imply deno",
     "node_subpath_exports": "the manifest records current exports, not which of them the adopter wants maintained",
+    "node_package_scope": "the scope is in the existing name, but a scoped name is the adopter's publication identity and reading it back would pin the template to their registry",
     "node_keywords": "free prose",
     "node_peer_dependencies": "a peer block in an existing manifest is the adopter's, and copying it would assert a relationship the template cannot verify",
     "use_commitizen": "leaves no tracked file that distinguishes it from other pre-commit tooling",

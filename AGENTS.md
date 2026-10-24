@@ -136,7 +136,10 @@ already the effective value.
   `SECURITY.md`/`CONTRIBUTING.md`, and `.env`), so treat anything added to it as
   permanently the adopter's to maintain. Derived files — `package.json`, the
   workflows, the tool configs — are deliberately absent so `update` keeps them
-  in step with the answers.
+  in step with the answers. `.gitignore` is absent for a different reason: it is
+  rewritten like a derived file, so it ends with an adopter-rules marker and the
+  generated half above that marker is what the template owns. Skipping it instead
+  would leave an adopting checkout with none of the generated rules.
 - `_tasks` are shell commands that run after generation (git init, pre-commit
   install, upstream wiring).
 - `_jinja_extensions` include `jinja2_time.TimeExtension`. The system copier

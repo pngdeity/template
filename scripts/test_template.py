@@ -62,6 +62,7 @@ TEMPLATE = REPO_ROOT
 
 JSON_FILES = (
     "package.json",
+    "biome.json",
     "tsconfig.json",
     "deno.json",
     ".devcontainer/devcontainer.json",
@@ -74,6 +75,14 @@ DOC_FILES = (
     "CHANGELOG.md",
     "CONTRIBUTING.md",
     "SECURITY.md",
+)
+
+# Must match the last line of template/.gitignore.jinja. Copier rewrites the
+# whole file, so this marker is what tells an adopter where their own rules
+# begin; a render that stops before it, or continues past it, means the
+# generated half would clobber them on update.
+GITIGNORE_ADOPTER_MARKER = (
+    "# --- Everything below this line is yours; template updates never touch it. ---"
 )
 
 # Jinja allowlist: this file is a Go template for terraform-docs, so its
@@ -163,6 +172,17 @@ def configs() -> list[Config]:
                 "node_purpose": "plugin",
                 "node_build": "tsup",
                 "node_package_manager": "yarn",
+            },
+        ),
+        Config(
+            "ts-plugin-scoped",
+            {
+                **ts,
+                "node_purpose": "plugin",
+                "node_package_manager": "bun",
+                "node_runtime": "bun",
+                "node_lint": "biome",
+                "node_package_scope": "pngdeity",
             },
         ),
         Config(
@@ -319,8 +339,11 @@ def check_json(dest: Path, problems: list[str]) -> None:
         path = dest / rel
         if not path.exists():
             continue
+        text = path.read_text()
+        if text != text.rstrip() + "\n":
+            problems.append(f"{rel} does not end with exactly one newline")
         try:
-            json.loads(path.read_text())
+            json.loads(text)
         except json.JSONDecodeError as exc:
             problems.append(f"{rel} is not valid JSON: {exc}")
 
@@ -382,6 +405,23 @@ def check_usage_placeholder(dest: Path, problems: list[str]) -> None:
         body = [line.strip() for line in block.splitlines() if line.strip()]
         if body and all(line.startswith("#") for line in body):
             problems.append("README.md ## Usage is a fence of comments only")
+
+
+def check_gitignore(dest: Path, problems: list[str]) -> None:
+    # The generated half must end at the adopter marker, or an `update` would
+    # overwrite whatever the adopter put below it.
+    path = dest / ".gitignore"
+    if not path.exists():
+        problems.append(".gitignore was not rendered")
+        return
+    lines = path.read_text().splitlines()
+    marker = GITIGNORE_ADOPTER_MARKER
+    if marker not in lines:
+        problems.append(".gitignore has no adopter-rules marker")
+    elif lines[-1] != marker:
+        problems.append(".gitignore continues past the adopter-rules marker")
+    if lines.count(marker) > 1:
+        problems.append(".gitignore repeats the adopter-rules marker")
 
 
 def check_lint(dest: Path, problems: list[str]) -> str:
@@ -725,6 +765,7 @@ def check_output(cfg: Config, dest: Path) -> list[str]:
     check_jinja(dest, problems)
     check_blank_lines(dest, problems)
     check_usage_placeholder(dest, problems)
+    check_gitignore(dest, problems)
     if cfg.adopt:
         check_manifest_overwritten(dest, problems)
     check_lint(dest, problems)

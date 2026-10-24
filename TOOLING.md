@@ -73,6 +73,10 @@ Consequences worth knowing:
 - When `node_lint` is not `deno`, deno is no longer the formatter of record for
   that repository, and the row above in the LSP matrix does not apply. `biome`
   is emitted as a `devDependency`.
+- `biome.json` is emitted whenever the linter is `biome`. Without it the CI lint
+  step runs biome at its defaults, which reformats Markdown prose and rewrites
+  the single quotes the generated workflows use, so an adopted repository fails
+  its own lint job on code it never touched.
 - `publishConfig.provenance` is honoured by npm only, so `publish.yml` always
   runs `npm publish` regardless of `node_package_manager`.
 
@@ -93,12 +97,25 @@ says so. This is deliberate: a manifest that silently disagrees with
 `node_runtime`, `node_purpose` and `node_build` is worse than one that has to be
 merged.
 
-`plugin` is the third purpose. It emits no `"."` export by default: OpenCode
-resolves `<package>/server` and `<package>/tui` by entrypoint name, so a plugin
-whose manifest exports only a root has no loadable entrypoint. With a build the
-entrypoints are one-line root shims re-exporting `dist/`; without one they point
-at the `.ts` sources directly, which is the shape OpenCode documents and its
-loader resolves.
+`plugin` is the third purpose. It always emits `"./server"` and `"./tui"`:
+OpenCode resolves `<package>/server` and `<package>/tui` by entrypoint name, so
+a plugin whose manifest exports only a root has no loadable entrypoint. It also
+emits `"."` and ships the root entrypoint in `files`, because a plugin that
+registers through its default export is imported by name as well as loaded by
+entrypoint. With a build the entrypoints are one-line root shims re-exporting
+`dist/`; without one they point at the `.ts` sources directly, which is the
+shape OpenCode documents and its loader resolves.
+
+A plugin is not `private`, so it carries the same publishing surface as a
+library. `node_package_scope` prepends an npm scope (`@acme/my-plugin`) for a
+package published to a registry organisation.
+
+Every path a plugin manifest declares is rendered: `index.ts`/`index.js`,
+`server.ts`/`.js` and `tui.ts`/`.js` are all emitted alongside the manifest, so
+`npm pack` publishes a complete entrypoint set rather than a `files` list
+promising files the render never created. The three are one-line re-exports of
+`src/index`, so a project replaces `src/index.ts` and leaves the root modules
+alone.
 
 ## Staying current with the template
 
